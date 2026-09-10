@@ -8,6 +8,13 @@ const history = document.getElementById("history");
 const sidebar = document.getElementById("sidebar");
 const menu = document.getElementById("menu");
 const newChat = document.getElementById("newChat");
+const attachBtn = document.getElementById("attachBtn");
+const imageInput = document.getElementById("imageInput");
+const imagePreviewContainer = document.getElementById("imagePreviewContainer");
+const imagePreview = document.getElementById("imagePreview");
+const removeImageBtn = document.getElementById("removeImageBtn");
+
+let attachedImageBase64 = null;
 
 let messages = [];
 let chats = [];
@@ -80,8 +87,63 @@ if (newChat) {
 
         input.value = "";
         autoResize();
+        if (removeImageBtn) removeImageBtn.click();
         input.focus();
         sidebar.classList.remove("open");
+    };
+}
+
+/* IMAGE HANDLING */
+if (attachBtn) {
+    attachBtn.onclick = () => {
+        imageInput.click();
+    };
+}
+
+if (removeImageBtn) {
+    removeImageBtn.onclick = () => {
+        attachedImageBase64 = null;
+        imagePreviewContainer.style.display = "none";
+        imagePreview.src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
+        imageInput.value = "";
+    };
+}
+
+if (imageInput) {
+    imageInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                let width = img.width;
+                let height = img.height;
+                const maxDim = 800;
+
+                if (width > height && width > maxDim) {
+                    height *= maxDim / width;
+                    width = maxDim;
+                } else if (height > maxDim) {
+                    width *= maxDim / height;
+                    height = maxDim;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, width, height);
+
+                attachedImageBase64 = canvas.toDataURL("image/jpeg", 0.7);
+                imagePreview.src = attachedImageBase64;
+                imagePreviewContainer.style.display = "block";
+                input.focus();
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
     };
 }
 
@@ -177,7 +239,7 @@ function addCodeCopyButtons(container) {
 }
 
 /* ADD MESSAGE */
-function addMessage(role, content = "") {
+function addMessage(role, content = "", imageUrl = null) {
     welcome.style.display = "none";
 
     const wrapper = document.createElement("div");
@@ -193,7 +255,20 @@ function addMessage(role, content = "") {
     if (role === "assistant") {
         bubble.innerHTML = DOMPurify.sanitize(marked.parse(content));
     } else {
-        bubble.textContent = content;
+        if (imageUrl) {
+            const img = document.createElement("img");
+            img.src = imageUrl;
+            img.style.maxWidth = "100%";
+            img.style.maxHeight = "300px";
+            img.style.borderRadius = "8px";
+            img.style.marginBottom = "10px";
+            img.style.display = "block";
+            bubble.appendChild(img);
+        }
+        const textSpan = document.createElement("span");
+        textSpan.textContent = content;
+        textSpan.style.whiteSpace = "pre-wrap";
+        bubble.appendChild(textSpan);
     }
 
     wrapper.appendChild(avatar);
@@ -209,20 +284,33 @@ composer.addEventListener("submit", async e => {
     e.preventDefault();
 
     const text = input.value.trim();
-    if (!text || generating) return;
+    if (!text && !attachedImageBase64 || generating) return;
 
     generating = true;
     send.disabled = true;
 
+    let userContent;
+    if (attachedImageBase64) {
+        userContent = [
+            { type: "text", text: text || "What's in this image?" },
+            { type: "image_url", image_url: { url: attachedImageBase64 } }
+        ];
+    } else {
+        userContent = text;
+    }
+
     messages.push({
         role: "user",
-        content: text
+        content: userContent
     });
 
-    addMessage("user", text);
+    addMessage("user", text, attachedImageBase64);
 
+    const savedImage = attachedImageBase64;
+    
     input.value = "";
     autoResize();
+    if (removeImageBtn) removeImageBtn.click();
 
     const assistantBubble = addMessage("assistant", "");
 
@@ -319,7 +407,11 @@ function saveCurrentChat() {
     const first = messages.find(m => m.role === "user");
     if (!first) return;
 
-    const title = first.content.slice(0, 40);
+    let titleText = typeof first.content === 'string' 
+        ? first.content 
+        : (first.content.find(c => c.type === 'text')?.text || "Image chat");
+    
+    const title = titleText.slice(0, 40);
 
     if (!currentChatId) {
         currentChatId = makeChatId();
@@ -354,7 +446,15 @@ function loadChat(chatData) {
     chat.innerHTML = "";
 
     messages.forEach(message => {
-        addMessage(message.role, message.content);
+        let text = "";
+        let img = null;
+        if (typeof message.content === 'string') {
+            text = message.content;
+        } else if (Array.isArray(message.content)) {
+            text = message.content.find(c => c.type === 'text')?.text || "";
+            img = message.content.find(c => c.type === 'image_url')?.image_url?.url || null;
+        }
+        addMessage(message.role, text, img);
     });
 
     renderHistory();
