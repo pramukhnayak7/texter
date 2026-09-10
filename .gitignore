@@ -1,2 +1,38 @@
-.env
+# Dependencies
 node_modules/
+
+# Environment variables / API keys
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime files
+*.pid
+*.pid.lock
+
+# Build / coverage output
+dist/
+build/
+coverage/
+
+# Cache
+.cache/
+.npm/
+.eslintcache
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
