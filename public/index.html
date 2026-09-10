@@ -5,7 +5,7 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
-    <title>AI Chat</title>
+    <title>AI Teacher // Terminal</title>
 
     <link rel="stylesheet" href="styles.css">
 
@@ -23,7 +23,7 @@
 
         <div class="sidebar-top">
 
-            <button class="new-chat" id="newChat">
+            <button class="new-chat" id="newChat" title="Start a new chat">
                 <span>＋</span>
                 New chat
             </button>
@@ -34,10 +34,7 @@
 
         <div class="sidebar-bottom">
 
-            <button class="side-button" id="themeButton">
-                ◐
-                <span>Toggle theme</span>
-            </button>
+            <div class="terminal-status"><span class="status-dot"></span> SYSTEM ONLINE</div>
 
             <div class="account">
                 <div class="avatar">AI</div>
@@ -101,28 +98,12 @@
 
                 <div class="logo">✦</div>
 
+                <div class="terminal-prompt">$ ai-teacher --ready</div>
                 <h1>How can I help?</h1>
 
                 <p>
                     Ask anything and choose an OpenRouter model above.
                 </p>
-
-                <div class="suggestions">
-
-                    <button onclick="usePrompt('Explain quantum computing simply')">
-                        Explain quantum computing
-                    </button>
-
-                    <button onclick="usePrompt('Write a Python program for a calculator')">
-                        Write some code
-                    </button>
-
-                    <button onclick="usePrompt('Give me ideas for a project')">
-                        Brainstorm ideas
-                    </button>
-
-                </div>
-
             </div>
 
         </section>
@@ -151,6 +132,7 @@
 
             </form>
 
+            <div class="terminal-hint">ENTER to send&nbsp;&nbsp; • &nbsp;&nbsp;SHIFT+ENTER for newline</div>
             <div class="disclaimer">
                 AI can make mistakes. Check important information.
             </div>
