@@ -1,4 +1,24 @@
-// Background script to communicate with the local Node.js server
+// Create context menu on installation
+chrome.runtime.onInstalled.addListener(() => {
+    chrome.contextMenus.create({
+        id: "analyzeTextMenu",
+        title: "✨ Analyze Text",
+        contexts: ["selection"]
+    });
+});
+
+// Handle context menu clicks
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+    if (info.menuItemId === "analyzeTextMenu" && info.selectionText) {
+        // Open a small popup window for analysis
+        chrome.windows.create({
+            url: `analysis-window.html?text=${encodeURIComponent(info.selectionText)}`,
+            type: "popup",
+            width: 400,
+            height: 500
+        });
+    }
+});
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'analyzeText') {
