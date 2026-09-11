@@ -4,7 +4,6 @@ node_modules/
 # Environment variables / API keys
 .env
 .env.*
-!.env.example
 
 # Logs
 *.log
