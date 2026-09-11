@@ -1,11 +1,26 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const path = require("path");
+const http = require("http");
+const { Server } = require("socket.io");
 
 dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 const PORT = process.env.PORT || 3000;
+
+io.on("connection", (socket) => {
+    console.log("A user connected");
+    socket.on("chat message", (msg) => {
+        // Broadcast the message to all connected clients except the sender
+        socket.broadcast.emit("chat message", msg);
+    });
+    socket.on("disconnect", () => {
+        console.log("A user disconnected");
+    });
+});
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.static(path.join(__dirname, "public")));
@@ -83,6 +98,6 @@ app.post("/api/chat", async (req, res) => {
 app.use((req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
-app.listen(PORT, "0.0.0.0", () => {
+server.listen(PORT, "0.0.0.0", () => {
     console.log(`Chat running on http://0.0.0.0:${PORT}`);
 });

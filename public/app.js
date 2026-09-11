@@ -21,6 +21,10 @@ let chats = [];
 let currentChatId = null;
 let generating = false;
 
+let isLiveChat = false;
+let socket = null;
+const liveChatBtn = document.getElementById("liveChatBtn");
+
 /* HISTORY DELETE BUTTON STYLING */
 const historyStyle = document.createElement("style");
 historyStyle.textContent = `
@@ -78,16 +82,52 @@ if (menu) {
 /* NEW CHAT */
 if (newChat) {
     newChat.onclick = () => {
+        isLiveChat = false;
         messages = [];
         currentChatId = null;
 
         chat.innerHTML = "";
         chat.appendChild(welcome);
+        const h1 = welcome.querySelector("h1");
+        const p = welcome.querySelector("p");
+        if(h1) h1.textContent = "How can I help?";
+        if(p) p.textContent = "Ask anything, attach images for MCQs, and choose an OpenRouter model above.";
         welcome.style.display = "block";
 
         input.value = "";
         autoResize();
         if (removeImageBtn) removeImageBtn.click();
+        input.focus();
+        sidebar.classList.remove("open");
+    };
+}
+
+/* LIVE CHAT */
+if (liveChatBtn) {
+    liveChatBtn.onclick = () => {
+        isLiveChat = true;
+        chat.innerHTML = "";
+        chat.appendChild(welcome);
+        const h1 = welcome.querySelector("h1");
+        const p = welcome.querySelector("p");
+        if(h1) h1.textContent = "Global Live Chat";
+        if(p) p.textContent = "Chat with other users in real-time.";
+        welcome.style.display = "block";
+        
+        if (!socket) {
+            socket = io();
+            socket.on("chat message", (msg) => {
+                welcome.style.display = "none";
+                const wrapper = document.createElement("div");
+                wrapper.className = "message assistant";
+                wrapper.innerHTML = `<div class="role" style="background:#ff9500">U</div><div class="bubble"><span style="white-space: pre-wrap">${escapeHtml(msg)}</span></div>`;
+                chat.appendChild(wrapper);
+                chat.scrollTop = chat.scrollHeight;
+            });
+        }
+        
+        input.value = "";
+        autoResize();
         input.focus();
         sidebar.classList.remove("open");
     };
@@ -285,6 +325,22 @@ composer.addEventListener("submit", async e => {
 
     const text = input.value.trim();
     if (!text && !attachedImageBase64 || generating) return;
+
+    if (isLiveChat) {
+        if (!text) return;
+        if (socket) socket.emit("chat message", text);
+        
+        welcome.style.display = "none";
+        const wrapper = document.createElement("div");
+        wrapper.className = "message user";
+        wrapper.innerHTML = `<div class="role">You</div><div class="bubble"><span style="white-space: pre-wrap">${escapeHtml(text)}</span></div>`;
+        chat.appendChild(wrapper);
+        chat.scrollTop = chat.scrollHeight;
+        
+        input.value = "";
+        autoResize();
+        return;
+    }
 
     generating = true;
     send.disabled = true;
@@ -532,3 +588,58 @@ function escapeHtml(text) {
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
 }
+
+/* TEXT SELECTION ANALYSIS */
+const selectionTooltip = document.createElement("button");
+selectionTooltip.textContent = "Analyze Text";
+selectionTooltip.style.position = "fixed";
+selectionTooltip.style.display = "none";
+selectionTooltip.style.zIndex = "1000";
+selectionTooltip.style.padding = "6px 12px";
+selectionTooltip.style.background = "var(--red)";
+selectionTooltip.style.color = "#fff";
+selectionTooltip.style.border = "none";
+selectionTooltip.style.borderRadius = "6px";
+selectionTooltip.style.cursor = "pointer";
+selectionTooltip.style.fontSize = "12px";
+selectionTooltip.style.fontWeight = "bold";
+selectionTooltip.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+document.body.appendChild(selectionTooltip);
+
+document.addEventListener("mouseup", (e) => {
+    // Small delay to allow selection to update
+    setTimeout(() => {
+        const selection = window.getSelection();
+        const text = selection.toString().trim();
+        
+        if (text.length > 0 && !generating) {
+            const range = selection.getRangeAt(0);
+            const rect = range.getBoundingClientRect();
+            
+            // Ensure tooltip stays within viewport
+            let top = rect.top - 40;
+            if (top < 10) top = rect.bottom + 10;
+            
+            selectionTooltip.style.top = `${top}px`;
+            selectionTooltip.style.left = `${rect.left + rect.width / 2}px`;
+            selectionTooltip.style.transform = "translateX(-50%)";
+            selectionTooltip.style.display = "block";
+            
+            selectionTooltip.onclick = () => {
+                selectionTooltip.style.display = "none";
+                input.value = "Please analyze this text:\n\n" + text;
+                composer.requestSubmit();
+                window.getSelection().removeAllRanges();
+            };
+        } else {
+            selectionTooltip.style.display = "none";
+        }
+    }, 10);
+});
+
+// Hide tooltip on mousedown so it doesn't stay if user clicks away
+document.addEventListener("mousedown", (e) => {
+    if (e.target !== selectionTooltip) {
+        selectionTooltip.style.display = "none";
+    }
+});
