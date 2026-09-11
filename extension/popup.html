@@ -82,6 +82,52 @@
         .status-text {
             font-weight: bold;
         }
+        .settings {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        @media (prefers-color-scheme: dark) {
+            .settings { border-top-color: #333; }
+        }
+        .settings label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: #666;
+        }
+        @media (prefers-color-scheme: dark) {
+            .settings label { color: #aaa; }
+        }
+        .settings input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        @media (prefers-color-scheme: dark) {
+            .settings input[type="text"] {
+                background: #2a2a2a;
+                border-color: #444;
+                color: #fff;
+            }
+        }
+        .save-btn {
+            margin-top: 10px;
+            width: 100%;
+            padding: 8px;
+            background: #6e8efb;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .save-btn:hover {
+            background: #5a7be0;
+        }
     </style>
 </head>
 <body>
@@ -94,6 +140,12 @@
             <input type="checkbox" id="aiModeToggle">
             <span class="slider"></span>
         </label>
+    </div>
+
+    <div class="settings">
+        <label for="serverUrl">Server IP / URL:</label>
+        <input type="text" id="serverUrl" placeholder="http://192.168.1.X:3000">
+        <button class="save-btn" id="saveBtn">Save URL</button>
     </div>
 
     <script src="popup.js"></script>

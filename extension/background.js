@@ -15,7 +15,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 async function analyzeText(text, model) {
-    const response = await fetch('http://localhost:3000/api/chat', {
+    const { serverUrl } = await chrome.storage.local.get(['serverUrl']);
+    const baseUrl = serverUrl || 'http://localhost:3000';
+    
+    const response = await fetch(`${baseUrl}/api/chat`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -35,7 +38,10 @@ async function analyzeText(text, model) {
 
 async function streamAnalyzeText(text, model, tabId) {
     try {
-        const response = await fetch('http://localhost:3000/api/chat', {
+        const { serverUrl } = await chrome.storage.local.get(['serverUrl']);
+        const baseUrl = serverUrl || 'http://localhost:3000';
+
+        const response = await fetch(`${baseUrl}/api/chat`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
