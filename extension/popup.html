@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Mode Toggle</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            width: 250px;
+            padding: 15px;
+            margin: 0;
+            background: #fff;
+            color: #333;
+        }
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #1e1e1e;
+                color: #f0f0f0;
+            }
+        }
+        h2 {
+            margin-top: 0;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        p {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        @media (prefers-color-scheme: dark) {
+            p { color: #aaa; }
+        }
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #6e8efb;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .status-text {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h2>✨ AI Teacher</h2>
+    <p>Enable AI Mode to show the floating window and analyze text selections on any website.</p>
+    
+    <div class="toggle-container">
+        <span class="status-text" id="statusText">Off</span>
+        <label class="switch">
+            <input type="checkbox" id="aiModeToggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
