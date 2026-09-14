@@ -15,36 +15,98 @@ chrome.action.onClicked.addListener(async (tab) => {
     }
 });
 
-// Create context menu on installation
-chrome.runtime.onInstalled.addListener(() => {
-    chrome.contextMenus.create({
-        id: "openCopilotSidebar",
-        title: "✨ Open AI Copilot Sidebar",
-        contexts: ["all"]
-    });
+function setupContextMenus() {
+    chrome.contextMenus.removeAll(() => {
+        // Selection context menu: shown when text is highlighted
+        chrome.contextMenus.create({
+            id: "analyzeSelectedText",
+            title: "✨ Analyze with AI Copilot",
+            contexts: ["selection"]
+        });
 
-    chrome.contextMenus.create({
-        id: "lensScreenMenu",
-        title: "📸 Screen Lens (Solve Question)",
-        contexts: ["page", "image"]
+        // Page context menu: shown when right-clicking normal page area
+        chrome.contextMenus.create({
+            id: "openCopilotSidebar",
+            title: "✨ Open AI Copilot Sidebar",
+            contexts: ["page", "action"]
+        });
+
+        // Lens Screen menu
+        chrome.contextMenus.create({
+            id: "lensScreenMenu",
+            title: "📸 Screen Lens (Solve Question)",
+            contexts: ["page", "image"]
+        });
     });
-});
+}
+
+chrome.runtime.onInstalled.addListener(setupContextMenus);
+chrome.runtime.onStartup.addListener(setupContextMenus);
 
 // Handle context menu clicks
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-    if (info.menuItemId === "openCopilotSidebar") {
-        if (chrome.sidePanel && chrome.sidePanel.open) {
-            await chrome.sidePanel.open({ tabId: tab.id });
+    if (info.menuItemId === "analyzeSelectedText") {
+        const text = (info.selectionText || "").trim();
+        if (!text) return;
+
+        if (tab && tab.id && chrome.sidePanel && chrome.sidePanel.open) {
+            try {
+                await chrome.sidePanel.open({ tabId: tab.id });
+            } catch (e) {
+                console.error("sidePanel.open error:", e);
+            }
+        }
+
+        // Save selection for when sidepanel initializes
+        await chrome.storage.local.set({
+            pendingSelectionAnalysis: {
+                text: text,
+                timestamp: Date.now()
+            }
+        });
+
+        // Also broadcast directly to already-open sidepanel
+        chrome.runtime.sendMessage({
+            action: 'analyzeSelection',
+            text: text
+        }).catch(() => {});
+
+    } else if (info.menuItemId === "openCopilotSidebar") {
+        if (tab && tab.id && chrome.sidePanel && chrome.sidePanel.open) {
+            await chrome.sidePanel.open({ tabId: tab.id }).catch(() => {});
         }
     } else if (info.menuItemId === "lensScreenMenu") {
-        if (chrome.sidePanel && chrome.sidePanel.open) {
-            await chrome.sidePanel.open({ tabId: tab.id });
+        if (tab && tab.id && chrome.sidePanel && chrome.sidePanel.open) {
+            await chrome.sidePanel.open({ tabId: tab.id }).catch(() => {});
         }
+        setTimeout(() => {
+            chrome.runtime.sendMessage({ action: 'triggerLensSnap' }).catch(() => {});
+        }, 400);
     }
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === 'analyzeText') {
+    if (request.action === 'openSidepanelWithText') {
+        const tabId = sender.tab ? sender.tab.id : null;
+        if (tabId && chrome.sidePanel && chrome.sidePanel.open) {
+            chrome.sidePanel.open({ tabId }).catch(err => console.error("sidePanel open err:", err));
+        }
+
+        chrome.storage.local.set({
+            pendingSelectionAnalysis: {
+                text: request.text,
+                timestamp: Date.now()
+            }
+        }).then(() => {
+            chrome.runtime.sendMessage({
+                action: 'analyzeSelection',
+                text: request.text
+            }).catch(() => {});
+        });
+
+        sendResponse({ success: true });
+        return true;
+    } else if (request.action === 'analyzeText') {
         analyzeText(request.text, request.model)
             .then(data => sendResponse({ success: true, data }))
             .catch(error => sendResponse({ success: false, error: error.message }));

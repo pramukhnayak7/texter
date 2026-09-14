@@ -138,6 +138,42 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.readAsDataURL(file);
     }
 
+    // Handle external text analysis (from right-click context menu or on-page analyze button)
+    async function handleAnalyzeText(text) {
+        if (!text || isGenerating) return;
+        const cleanText = text.trim();
+        if (!cleanText) return;
+
+        appendMessage('user', cleanText);
+
+        // Fast direct prompt to guarantee answers within 10-15s
+        const promptToSend = `Directly solve or analyze this question/text. State the CORRECT OPTION / ANSWER prominently at the top, followed by a concise 1-3 sentence explanation. Be fast and direct:\n\n${cleanText}`;
+
+        await sendChatRequest(promptToSend, null);
+    }
+
+    // Check for pending text analysis when sidepanel opens
+    chrome.storage.local.get(['pendingSelectionAnalysis'], (res) => {
+        if (res && res.pendingSelectionAnalysis) {
+            const { text, timestamp } = res.pendingSelectionAnalysis;
+            chrome.storage.local.remove('pendingSelectionAnalysis');
+            if (text && Date.now() - timestamp < 45000) {
+                handleAnalyzeText(text);
+            }
+        }
+    });
+
+    // Listen for real-time messages from background/content script
+    chrome.runtime.onMessage.addListener((msg) => {
+        if (msg.action === 'analyzeSelection' && msg.text) {
+            handleAnalyzeText(msg.text);
+        } else if (msg.action === 'triggerLensSnap') {
+            if (lensSnapBtn && !isGenerating) {
+                lensSnapBtn.click();
+            }
+        }
+    });
+
     // Lens Snap Active Tab
     if (lensSnapBtn) {
         lensSnapBtn.addEventListener('click', async () => {
@@ -149,7 +185,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const compressed = await compressImage(rawScreenshot);
                 
-                const prompt = "Please analyze this screenshot. Identify any multiple-choice question (MCQ) or exam problem, state the CORRECT OPTION / ANSWER clearly, and provide a brief concise explanation.";
+                // Fast direct prompt for rapid 10-15s response
+                const prompt = "Directly solve any question or MCQ shown in this screenshot. State the question number, CORRECT OPTION / ANSWER prominently first, followed by a concise 1-2 sentence explanation. Be fast and direct.";
 
                 appendMessage('user', '📸 Screen Lens Capture', compressed);
                 await sendChatRequest(prompt, compressed);
@@ -353,13 +390,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const canvas = document.createElement('canvas');
                 let width = img.width;
                 let height = img.height;
-                const maxDim = 900;
+                const maxDim = 720; // 720p optimized for high-speed network transmission (<50KB)
 
                 if (width > height && width > maxDim) {
-                    height *= maxDim / width;
+                    height = Math.round(height * (maxDim / width));
                     width = maxDim;
                 } else if (height > maxDim) {
-                    width *= maxDim / height;
+                    width = Math.round(width * (maxDim / height));
                     height = maxDim;
                 }
 
@@ -367,7 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-                resolve(canvas.toDataURL('image/jpeg', 0.75));
+                resolve(canvas.toDataURL('image/jpeg', 0.65));
             };
             img.src = dataUrl;
         });

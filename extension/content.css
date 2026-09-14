@@ -2,24 +2,28 @@
 
 #ai-teacher-analyze-btn {
     position: absolute;
-    z-index: 2147483647; /* Max z-index */
-    background: linear-gradient(135deg, #6e8efb, #a777e3);
-    color: white;
+    z-index: 2147483647;
+    background: linear-gradient(135deg, #2563eb, #06b6d4);
+    color: #ffffff;
     border: none;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    font-size: 14px;
-    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
     display: none;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
 }
 
 #ai-teacher-analyze-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.55);
 }
 
 #ai-teacher-floating-window {
