@@ -3,34 +3,19 @@
 }
 
 :root {
-    color-scheme: dark;
-    --bg: #0a0a0b;
-    --sidebar: #0e0e10;
-    --text: #eeeeef;
-    --muted: #8a8a91;
-    --border: #29292e;
-    --input: #111114;
-    --hover: #1a1a1e;
-    --user: #18181c;
-    --red: #ff3b30;
-    --red-bright: #ff5148;
-    --red-dark: #7f1713;
-    --red-soft: rgba(255, 59, 48, .10);
-}
-
-body.dark {
-    --bg: #0a0a0b;
-    --sidebar: #0e0e10;
-    --text: #eeeeef;
-    --muted: #8a8a91;
-    --border: #29292e;
-    --input: #111114;
-    --hover: #1a1a1e;
-    --user: #18181c;
-    --red: #ff3b30;
-    --red-bright: #ff5148;
-    --red-dark: #7f1713;
-    --red-soft: rgba(255, 59, 48, .10);
+    color-scheme: light;
+    --bg: #f8fafc;
+    --sidebar: #f1f5f9;
+    --text: #0f172a;
+    --muted: #64748b;
+    --border: #cbd5e1;
+    --input: #ffffff;
+    --hover: #e2e8f0;
+    --user: #ffffff;
+    --red: #dc2626;
+    --red-bright: #ef4444;
+    --red-dark: #b91c1c;
+    --red-soft: rgba(220, 38, 38, .10);
 }
 
 body.light {
@@ -47,6 +32,22 @@ body.light {
     --red-bright: #ef4444;
     --red-dark: #b91c1c;
     --red-soft: rgba(220, 38, 38, .10);
+}
+
+body.dark {
+    color-scheme: dark;
+    --bg: #0a0a0b;
+    --sidebar: #0e0e10;
+    --text: #eeeeef;
+    --muted: #8a8a91;
+    --border: #29292e;
+    --input: #111114;
+    --hover: #1a1a1e;
+    --user: #18181c;
+    --red: #ff3b30;
+    --red-bright: #ff5148;
+    --red-dark: #7f1713;
+    --red-soft: rgba(255, 59, 48, .10);
 }
 
 html,
@@ -236,10 +237,10 @@ select {
     appearance: none;
     -webkit-appearance: none;
 
-    background-color: #111114;
-    color: #eeeeef;
+    background-color: var(--input);
+    color: var(--text);
 
-    border: 1px solid #29292e;
+    border: 1px solid var(--border);
     border-radius: 6px;
 
     padding: 8px 30px 8px 11px;
@@ -247,23 +248,32 @@ select {
     outline: none;
     font-size: 11px;
     cursor: pointer;
-
-    color-scheme: dark;
 }
 
 #model:hover,
 #model:focus {
-    border-color: #7f1713;
+    border-color: var(--red);
 }
 
 #model option {
-    background-color: #111114;
-    color: #eeeeef;
+    background-color: var(--input);
+    color: var(--text);
 }
 
-#model option:checked {
-    background-color: #ff3b30;
-    color: #ffffff;
+body.light #model,
+body.light #model option {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+    color-scheme: light !important;
+}
+
+body.dark #model,
+body.dark #model option {
+    background-color: #111114 !important;
+    color: #eeeeef !important;
+    border-color: #29292e !important;
+    color-scheme: dark !important;
 }
 
 
@@ -539,67 +549,6 @@ textarea {
 .sidebar-overlay.active {
     opacity: 1;
     pointer-events: auto;
-}
-
-/* MOBILE */
-
-@media (max-width: 700px) {
-
-    .sidebar-header-mobile {
-        display: flex;
-    }
-
-    .sidebar-overlay {
-        display: block;
-    }
-
-    .sidebar {
-        position: fixed;
-        left: -300px;
-        top: 0;
-        bottom: 0;
-        width: 280px;
-        z-index: 25;
-        box-shadow: 4px 0 25px rgba(0, 0, 0, 0.5);
-        transition: transform .25s cubic-bezier(0.4, 0, 0.2, 1);
-        transform: translateX(0);
-    }
-
-    .sidebar.open {
-        transform: translateX(300px);
-    }
-
-    .sidebar::before {
-        display: none !important;
-    }
-
-    .menu {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        padding: 6px 10px;
-        margin-right: 8px;
-        border-radius: 6px;
-        border: 1px solid var(--border);
-        background: transparent;
-        color: var(--text);
-        font-size: 18px;
-        line-height: 1;
-    }
-
-    .menu:hover {
-        background: var(--hover);
-        border-color: var(--red);
-    }
-
-    .composer-area {
-        left: 0;
-    }
-
-    .message.user .bubble {
-        max-width: 85%;
-    }
 }
 
 /* =========================================================
@@ -1087,4 +1036,105 @@ body.light .message.user .bubble {
     background: #ffffff;
     border-color: var(--border);
 }
+
+/* =========================================================
+   MOBILE RESPONSIVENESS OVERRIDES
+   Must remain at bottom of file to guarantee override priority
+   ========================================================= */
+@media (max-width: 700px) {
+    .app {
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        width: 280px !important;
+        max-width: 82vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        z-index: 9999 !important;
+        flex: none !important;
+        background: var(--sidebar) !important;
+        border-right: 1px solid var(--border) !important;
+        box-shadow: 6px 0 30px rgba(0, 0, 0, 0.45) !important;
+        transform: translateX(-105%) !important;
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        padding: 12px !important;
+    }
+
+    .sidebar.open {
+        transform: translateX(0) !important;
+    }
+
+    .sidebar::before {
+        display: none !important;
+    }
+
+    .sidebar-header-mobile {
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        padding: 4px 6px 12px;
+        margin-bottom: 8px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-overlay {
+        display: block !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        background: rgba(0, 0, 0, 0.65) !important;
+        backdrop-filter: blur(2px) !important;
+        z-index: 9990 !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        transition: opacity 0.25s ease !important;
+    }
+
+    .sidebar-overlay.active {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+
+    .menu {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        padding: 6px 10px;
+        margin-right: 8px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text);
+        font-size: 18px;
+        line-height: 1;
+    }
+
+    .menu:hover {
+        background: var(--hover);
+        border-color: var(--red);
+    }
+
+    .composer-area {
+        left: 0;
+    }
+
+    .message.user .bubble {
+        max-width: 85%;
+    }
+}
+
 

@@ -4,7 +4,7 @@ const composer = document.getElementById("composer");
 const send = document.getElementById("send");
 const modelSelect = document.getElementById("model");
 const welcome = document.getElementById("welcome");
-const history = document.getElementById("history");
+const historyList = document.getElementById("history");
 const sidebar = document.getElementById("sidebar");
 const menu = document.getElementById("menu");
 const newChat = document.getElementById("newChat");
@@ -29,7 +29,7 @@ const liveChatBtn = document.getElementById("liveChatBtn");
 const themeToggle = document.getElementById("themeToggle");
 
 function initTheme() {
-    const savedTheme = localStorage.getItem("texter_theme") || "dark";
+    const savedTheme = localStorage.getItem("texter_theme") || "light";
     applyTheme(savedTheme);
 }
 
@@ -151,7 +151,7 @@ function switchToNewChat(updateUrl = true) {
     closeMobileSidebar();
 
     if (updateUrl && window.location.pathname !== "/chat") {
-        history.pushState({ page: "chat" }, "", "/chat");
+        window.history.pushState({ page: "chat" }, "", "/chat");
     }
 }
 
@@ -188,7 +188,7 @@ function switchToLiveChat(updateUrl = true) {
     closeMobileSidebar();
 
     if (updateUrl && window.location.pathname !== "/global-chat") {
-        history.pushState({ page: "global-chat" }, "", "/global-chat");
+        window.history.pushState({ page: "global-chat" }, "", "/global-chat");
     }
 }
 
@@ -630,7 +630,7 @@ function loadChat(chatData) {
     renderHistory();
     closeMobileSidebar();
     if (window.location.pathname !== "/chat") {
-        history.pushState({ page: "chat" }, "", "/chat");
+        window.history.pushState({ page: "chat" }, "", "/chat");
     }
     input.focus();
 }
@@ -661,7 +661,7 @@ function deleteChat(id, event) {
 }
 
 function renderHistory() {
-    history.innerHTML = "";
+    historyList.innerHTML = "";
 
     chats.forEach(chatData => {
         const item = document.createElement("div");
@@ -692,7 +692,7 @@ function renderHistory() {
 
         item.appendChild(title);
         item.appendChild(deleteButton);
-        history.appendChild(item);
+        historyList.appendChild(item);
     });
 }
 
@@ -766,8 +766,11 @@ function initRouter() {
     const path = window.location.pathname;
     if (path === "/global-chat") {
         switchToLiveChat(false);
-    } else if (path === "/chat") {
+    } else {
         switchToNewChat(false);
+        if (path !== "/chat") {
+            window.history.replaceState({ page: "chat" }, "", "/chat");
+        }
     }
 }
 
