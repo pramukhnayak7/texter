@@ -51,6 +51,13 @@ app.post("/api/chat", async (req, res) => {
             });
         }
 
+        // Auto-detect image payload: if image is present, avoid openrouter/free routing to nvidia content-safety
+        const hasImage = Array.isArray(messages) && messages.some(m => Array.isArray(m.content) && m.content.some(part => part.type === 'image_url'));
+        let chosenModel = model || "dots-studio/dots-3-note-preview:free";
+        if (hasImage && (!chosenModel || chosenModel === "openrouter/free" || chosenModel.includes("content-safety"))) {
+            chosenModel = "dots-studio/dots-3-note-preview:free";
+        }
+
         const response = await fetch(
             "https://openrouter.ai/api/v1/chat/completions",
             {
@@ -62,7 +69,7 @@ app.post("/api/chat", async (req, res) => {
                     "X-Title": "My OpenRouter Chat"
                 },
                 body: JSON.stringify({
-                    model: model || "openrouter/free",
+                    model: chosenModel,
                     messages,
                     stream: true
                 })

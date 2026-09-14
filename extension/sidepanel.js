@@ -26,7 +26,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load saved settings
     chrome.storage.local.get(['serverUrl', 'selectedModel', 'sidepanel_theme'], (result) => {
         if (serverUrlInput) serverUrlInput.value = result.serverUrl || 'http://localhost:3000';
-        const defaultModel = result.selectedModel || 'openrouter/free';
+        // If no model or outdated/problematic model saved, default to dots-studio
+        let defaultModel = result.selectedModel;
+        if (!defaultModel || defaultModel === 'openrouter/free' || defaultModel.includes('content-safety') || defaultModel.includes('gemini-2.5-flash')) {
+            defaultModel = 'dots-studio/dots-3-note-preview:free';
+            chrome.storage.local.set({ selectedModel: defaultModel });
+        }
         if (modelSelect) modelSelect.value = defaultModel;
         if (activeModelLabel) activeModelLabel.textContent = defaultModel.split('/')[1] || defaultModel;
 
@@ -226,7 +231,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const { serverUrl, selectedModel } = await chrome.storage.local.get(['serverUrl', 'selectedModel']);
         const baseUrl = serverUrl || 'http://localhost:3000';
-        const model = selectedModel || 'openrouter/free';
+        let model = selectedModel || 'dots-studio/dots-3-note-preview:free';
+        if (model === 'openrouter/free' || model.includes('content-safety')) {
+            model = 'dots-studio/dots-3-note-preview:free';
+        }
 
         // Prepare message payload
         let userContent;
@@ -245,7 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const assistantBubble = appendMessage('assistant', '');
-        assistantBubble.innerHTML = '<span class="status-loading"><span class="dot-pulse"></span> Thinking...</span>';
+        assistantBubble.innerHTML = '<span class="status-loading"><span class="dot-pulse"></span> Analyzing & solving...</span>';
 
         try {
             const response = await fetch(`${baseUrl}/api/chat`, {
@@ -266,8 +274,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(errorText);
             }
 
-            assistantBubble.innerHTML = '';
             let fullText = '';
+            let reasoningText = '';
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
@@ -284,6 +292,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         try {
                             const data = JSON.parse(line.slice(6));
                             const delta = data.choices?.[0]?.delta?.content;
+                            const reasoningDelta = data.choices?.[0]?.delta?.reasoning;
+
+                            if (reasoningDelta) {
+                                reasoningText += reasoningDelta;
+                                if (!fullText) {
+                                    assistantBubble.innerHTML = '<span class="status-loading"><span class="dot-pulse"></span> Formulating explanation...</span>';
+                                }
+                            }
+
                             if (delta) {
                                 fullText += delta;
                                 assistantBubble.textContent = fullText;
@@ -292,6 +309,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         } catch (e) {}
                     }
                 }
+            }
+
+            // Fallback if model only returned reasoning
+            if (!fullText.trim() && reasoningText.trim()) {
+                fullText = reasoningText;
+                assistantBubble.textContent = fullText;
             }
 
             conversation.push({

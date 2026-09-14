@@ -180,7 +180,7 @@ Keep it direct, accurate, and concise.`;
     async function analyzeText(text) {
         const { serverUrl, selectedModel } = await chrome.storage.local.get(['serverUrl', 'selectedModel']);
         const baseUrl = serverUrl || 'http://localhost:3000';
-        const model = selectedModel || 'openrouter/free';
+        const model = selectedModel || 'dots-studio/dots-3-note-preview:free';
 
         const response = await fetch(`${baseUrl}/api/chat`, {
             method: 'POST',

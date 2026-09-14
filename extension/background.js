@@ -60,7 +60,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 async function analyzeText(text, model) {
     const { serverUrl, selectedModel } = await chrome.storage.local.get(['serverUrl', 'selectedModel']);
     const baseUrl = serverUrl || 'http://localhost:3000';
-    const activeModel = model || selectedModel || 'openrouter/free';
+    const activeModel = model || selectedModel || 'dots-studio/dots-3-note-preview:free';
     
     const response = await fetch(`${baseUrl}/api/chat`, {
         method: 'POST',
@@ -84,7 +84,7 @@ async function streamAnalyzeText(text, model, tabId) {
     try {
         const { serverUrl, selectedModel } = await chrome.storage.local.get(['serverUrl', 'selectedModel']);
         const baseUrl = serverUrl || 'http://localhost:3000';
-        const activeModel = model || selectedModel || 'openrouter/free';
+        const activeModel = model || selectedModel || 'dots-studio/dots-3-note-preview:free';
 
         const response = await fetch(`${baseUrl}/api/chat`, {
             method: 'POST',

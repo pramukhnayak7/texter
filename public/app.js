@@ -514,6 +514,7 @@ composer.addEventListener("submit", async e => {
         const decoder = new TextDecoder();
         let buffer = "";
         let fullText = "";
+        let reasoningText = "";
 
         while (true) {
             const { value, done } = await reader.read();
@@ -532,6 +533,14 @@ composer.addEventListener("submit", async e => {
                 try {
                     const json = JSON.parse(data);
                     const delta = json.choices?.[0]?.delta?.content;
+                    const reasoningDelta = json.choices?.[0]?.delta?.reasoning;
+
+                    if (reasoningDelta) {
+                        reasoningText += reasoningDelta;
+                        if (!fullText) {
+                            assistantBubble.innerHTML = '<span style="color: var(--subtext); font-style: italic;"><span class="dot-pulse"></span> Analyzing & reasoning...</span>';
+                        }
+                    }
 
                     if (delta) {
                         fullText += delta;
@@ -544,6 +553,11 @@ composer.addEventListener("submit", async e => {
                     // Ignore malformed SSE chunks.
                 }
             }
+        }
+
+        if (!fullText.trim() && reasoningText.trim()) {
+            fullText = reasoningText;
+            assistantBubble.innerHTML = DOMPurify.sanitize(marked.parse(fullText));
         }
 
         // Store the completed assistant response only after streaming finishes.
