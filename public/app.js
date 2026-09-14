@@ -98,65 +98,102 @@ historyStyle.textContent = `
 `;
 document.head.appendChild(historyStyle);
 
-/* MOBILE MENU */
+/* MOBILE MENU & OVERLAY */
+const closeSidebarBtn = document.getElementById("closeSidebarBtn");
+const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+function openMobileSidebar() {
+    sidebar.classList.add("open");
+    if (sidebarOverlay) sidebarOverlay.classList.add("active");
+}
+
+function closeMobileSidebar() {
+    sidebar.classList.remove("open");
+    if (sidebarOverlay) sidebarOverlay.classList.remove("active");
+}
+
 if (menu) {
     menu.onclick = () => {
-        sidebar.classList.toggle("open");
-    };
-}
-
-/* NEW CHAT */
-if (newChat) {
-    newChat.onclick = () => {
-        isLiveChat = false;
-        messages = [];
-        currentChatId = null;
-
-        chat.innerHTML = "";
-        chat.appendChild(welcome);
-        const h1 = welcome.querySelector("h1");
-        const p = welcome.querySelector("p");
-        if(h1) h1.textContent = "How can I help?";
-        if(p) p.textContent = "Ask anything, attach images for MCQs, and choose an OpenRouter model above.";
-        welcome.style.display = "block";
-
-        input.value = "";
-        autoResize();
-        if (removeImageBtn) removeImageBtn.click();
-        input.focus();
-        sidebar.classList.remove("open");
-    };
-}
-
-/* LIVE CHAT */
-if (liveChatBtn) {
-    liveChatBtn.onclick = () => {
-        isLiveChat = true;
-        chat.innerHTML = "";
-        chat.appendChild(welcome);
-        const h1 = welcome.querySelector("h1");
-        const p = welcome.querySelector("p");
-        if(h1) h1.textContent = "Global Live Chat";
-        if(p) p.textContent = "Chat with other users in real-time.";
-        welcome.style.display = "block";
-        
-        if (!socket) {
-            socket = io();
-            socket.on("chat message", (msg) => {
-                welcome.style.display = "none";
-                const wrapper = document.createElement("div");
-                wrapper.className = "message assistant";
-                wrapper.innerHTML = `<div class="role" style="background:#ff9500">U</div><div class="bubble"><span style="white-space: pre-wrap">${escapeHtml(msg)}</span></div>`;
-                chat.appendChild(wrapper);
-                chat.scrollTop = chat.scrollHeight;
-            });
+        if (sidebar.classList.contains("open")) {
+            closeMobileSidebar();
+        } else {
+            openMobileSidebar();
         }
-        
-        input.value = "";
-        autoResize();
-        input.focus();
-        sidebar.classList.remove("open");
     };
+}
+
+if (closeSidebarBtn) {
+    closeSidebarBtn.onclick = closeMobileSidebar;
+}
+
+if (sidebarOverlay) {
+    sidebarOverlay.onclick = closeMobileSidebar;
+}
+
+/* NEW CHAT & URL ROUTING */
+function switchToNewChat(updateUrl = true) {
+    isLiveChat = false;
+    messages = [];
+    currentChatId = null;
+
+    chat.innerHTML = "";
+    chat.appendChild(welcome);
+    const h1 = welcome.querySelector("h1");
+    const p = welcome.querySelector("p");
+    if (h1) h1.textContent = "How can I help?";
+    if (p) p.textContent = "Ask anything, attach or paste screenshots with Ctrl+V for MCQs, and choose a free model above.";
+    welcome.style.display = "block";
+
+    input.value = "";
+    autoResize();
+    if (removeImageBtn) removeImageBtn.click();
+    input.focus();
+    closeMobileSidebar();
+
+    if (updateUrl && window.location.pathname !== "/chat") {
+        history.pushState({ page: "chat" }, "", "/chat");
+    }
+}
+
+if (newChat) {
+    newChat.onclick = () => switchToNewChat(true);
+}
+
+/* LIVE CHAT & URL ROUTING */
+function switchToLiveChat(updateUrl = true) {
+    isLiveChat = true;
+    chat.innerHTML = "";
+    chat.appendChild(welcome);
+    const h1 = welcome.querySelector("h1");
+    const p = welcome.querySelector("p");
+    if (h1) h1.textContent = "Global Live Chat";
+    if (p) p.textContent = "Chat with other users in real-time.";
+    welcome.style.display = "block";
+    
+    if (!socket && typeof io !== "undefined") {
+        socket = io();
+        socket.on("chat message", (msg) => {
+            welcome.style.display = "none";
+            const wrapper = document.createElement("div");
+            wrapper.className = "message assistant";
+            wrapper.innerHTML = `<div class="role" style="background:#ff9500">U</div><div class="bubble"><span style="white-space: pre-wrap">${escapeHtml(msg)}</span></div>`;
+            chat.appendChild(wrapper);
+            chat.scrollTop = chat.scrollHeight;
+        });
+    }
+    
+    input.value = "";
+    autoResize();
+    input.focus();
+    closeMobileSidebar();
+
+    if (updateUrl && window.location.pathname !== "/global-chat") {
+        history.pushState({ page: "global-chat" }, "", "/global-chat");
+    }
+}
+
+if (liveChatBtn) {
+    liveChatBtn.onclick = () => switchToLiveChat(true);
 }
 
 /* IMAGE HANDLING & PASTE */
@@ -591,7 +628,10 @@ function loadChat(chatData) {
     });
 
     renderHistory();
-    sidebar.classList.remove("open");
+    closeMobileSidebar();
+    if (window.location.pathname !== "/chat") {
+        history.pushState({ page: "chat" }, "", "/chat");
+    }
     input.focus();
 }
 
@@ -720,3 +760,24 @@ document.addEventListener("mousedown", (e) => {
         selectionTooltip.style.display = "none";
     }
 });
+
+/* URL ROUTER (/chat & /global-chat) */
+function initRouter() {
+    const path = window.location.pathname;
+    if (path === "/global-chat") {
+        switchToLiveChat(false);
+    } else if (path === "/chat") {
+        switchToNewChat(false);
+    }
+}
+
+window.addEventListener("popstate", () => {
+    const path = window.location.pathname;
+    if (path === "/global-chat") {
+        switchToLiveChat(false);
+    } else {
+        switchToNewChat(false);
+    }
+});
+
+initRouter();
