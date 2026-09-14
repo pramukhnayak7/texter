@@ -3,150 +3,472 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Mode Toggle</title>
+    <title>AI Teacher Lens</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            width: 250px;
-            padding: 15px;
-            margin: 0;
-            background: #fff;
-            color: #333;
+        :root {
+            --bg: #ffffff;
+            --text: #1a1a1a;
+            --subtext: #666666;
+            --border: #e2e8f0;
+            --card-bg: #f8fafc;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            --lens-gradient: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+            --accent: #10b981;
+            --error: #ef4444;
         }
+
         @media (prefers-color-scheme: dark) {
-            body {
-                background: #1e1e1e;
-                color: #f0f0f0;
+            :root {
+                --bg: #121214;
+                --text: #f3f4f6;
+                --subtext: #9ca3af;
+                --border: #27272a;
+                --card-bg: #18181b;
+                --primary: #6366f1;
+                --primary-hover: #4f46e5;
+                --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+                --lens-gradient: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+                --accent: #34d399;
+                --error: #f87171;
             }
         }
-        h2 {
-            margin-top: 0;
-            font-size: 16px;
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            width: 350px;
+            padding: 16px;
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .header-title {
             display: flex;
             align-items: center;
             gap: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
         }
-        p {
+
+        .popout-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--subtext);
+            border-radius: 6px;
+            padding: 5px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+
+        .popout-btn:hover {
+            color: var(--text);
+            border-color: var(--primary);
+        }
+
+        /* GOOGLE LENS STYLE CAMERA BUTTON */
+        .lens-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .lens-btn {
+            width: 100%;
+            background: var(--lens-gradient);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 14px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: inherit;
+            transition: transform 0.15s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+        }
+
+        .lens-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+        }
+
+        .lens-btn:active {
+            transform: translateY(1px);
+        }
+
+        .camera-icon-circle {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            backdrop-filter: blur(4px);
+        }
+
+        .camera-icon-circle svg {
+            width: 22px;
+            height: 22px;
+            stroke: white;
+        }
+
+        .lens-text {
+            text-align: left;
+        }
+
+        .lens-main-text {
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .lens-sub-text {
+            font-size: 11px;
+            opacity: 0.9;
+            margin-top: 2px;
+            line-height: 1.3;
+        }
+
+        /* LENS RESULTS */
+        .lens-result {
+            display: none;
+            margin-top: 12px;
+            border-top: 1px dashed var(--border);
+            padding-top: 12px;
+        }
+
+        .preview-container {
+            position: relative;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            max-height: 120px;
+        }
+
+        .preview-img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .preview-badge {
+            position: absolute;
+            bottom: 6px;
+            right: 6px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.5; }
+        }
+
+        .answer-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
             font-size: 13px;
-            color: #666;
-            margin-bottom: 20px;
+            line-height: 1.5;
+            max-height: 220px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            user-select: text;
         }
-        @media (prefers-color-scheme: dark) {
-            p { color: #aaa; }
+
+        .answer-box strong {
+            color: var(--accent);
         }
-        /* Toggle Switch */
+
+        .actions-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 7px 10px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text);
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: background 0.15s;
+        }
+
+        .action-btn:hover {
+            background: var(--border);
+        }
+
+        /* SETTINGS & TOGGLE */
+        .setting-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .setting-label {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .setting-desc {
+            font-size: 11px;
+            color: var(--subtext);
+            margin-top: 2px;
+        }
+
+        /* Toggle switch */
         .switch {
             position: relative;
             display: inline-block;
-            width: 50px;
-            height: 24px;
+            width: 44px;
+            height: 22px;
+            flex-shrink: 0;
         }
+
         .switch input {
             opacity: 0;
             width: 0;
             height: 0;
         }
+
         .slider {
             position: absolute;
             cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #cbd5e1;
+            transition: .3s;
+            border-radius: 22px;
         }
+
         .slider:before {
             position: absolute;
             content: "";
             height: 16px;
             width: 16px;
-            left: 4px;
-            bottom: 4px;
+            left: 3px;
+            bottom: 3px;
             background-color: white;
-            transition: .4s;
+            transition: .3s;
             border-radius: 50%;
         }
+
         input:checked + .slider {
-            background-color: #6e8efb;
+            background-color: var(--primary);
         }
+
         input:checked + .slider:before {
-            transform: translateX(26px);
+            transform: translateX(22px);
         }
-        .toggle-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .status-text {
-            font-weight: bold;
-        }
-        .settings {
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
-        }
-        @media (prefers-color-scheme: dark) {
-            .settings { border-top-color: #333; }
-        }
-        .settings label {
-            display: block;
-            font-size: 12px;
-            margin-bottom: 5px;
-            color: #666;
-        }
-        @media (prefers-color-scheme: dark) {
-            .settings label { color: #aaa; }
-        }
-        .settings input[type="text"] {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-family: inherit;
-        }
-        @media (prefers-color-scheme: dark) {
-            .settings input[type="text"] {
-                background: #2a2a2a;
-                border-color: #444;
-                color: #fff;
-            }
-        }
-        .save-btn {
+
+        /* Model & Server Inputs */
+        .field-group {
             margin-top: 10px;
+        }
+
+        .field-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--subtext);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .field-select, .field-input {
             width: 100%;
-            padding: 8px;
-            background: #6e8efb;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 12px;
+            font-family: inherit;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .field-select:focus, .field-input:focus {
+            border-color: var(--primary);
+        }
+
+        .save-btn {
+            margin-top: 6px;
+            width: 100%;
+            padding: 7px;
+            background: var(--primary);
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
-            font-weight: 500;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.15s;
         }
+
         .save-btn:hover {
-            background: #5a7be0;
+            background: var(--primary-hover);
+        }
+
+        .footer-note {
+            font-size: 11px;
+            color: var(--subtext);
+            text-align: center;
+            margin-top: 12px;
         }
     </style>
 </head>
 <body>
-    <h2>✨ AI Teacher</h2>
-    <p>Enable AI Mode to show the floating window and analyze text selections on any website.</p>
-    
-    <div class="toggle-container">
-        <span class="status-text" id="statusText">Off</span>
-        <label class="switch">
-            <input type="checkbox" id="aiModeToggle">
-            <span class="slider"></span>
-        </label>
+    <div class="header">
+        <div class="header-title">
+            <span>✨ AI Teacher</span>
+        </div>
+        <button class="popout-btn" id="popoutWindowBtn" title="Open persistent floating window">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            Float Window
+        </button>
     </div>
 
-    <div class="settings">
-        <label for="serverUrl">Server IP / URL:</label>
-        <input type="text" id="serverUrl" placeholder="http://192.168.1.X:3000">
-        <button class="save-btn" id="saveBtn">Save URL</button>
+    <!-- GOOGLE LENS CAMERA BUTTON -->
+    <div class="lens-card">
+        <button class="lens-btn" id="captureLensBtn">
+            <div class="camera-icon-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+            </div>
+            <div class="lens-text">
+                <div class="lens-main-text">
+                    <span>Screen Lens</span>
+                    <span style="font-size: 10px; background: rgba(255,255,255,0.25); padding: 1px 5px; border-radius: 4px;">Solve MCQ</span>
+                </div>
+                <div class="lens-sub-text">Click to snap active screen & answer</div>
+            </div>
+        </button>
+
+        <!-- LENS LIVE RESULT AREA -->
+        <div class="lens-result" id="lensResult">
+            <div class="preview-container">
+                <img id="lensPreview" class="preview-img" alt="Captured Screen">
+                <div class="preview-badge">Active Tab Capture</div>
+            </div>
+            <div class="status-badge" id="lensStatus">
+                <span class="pulse-dot"></span>
+                <span id="lensStatusText">Analyzing question with AI...</span>
+            </div>
+            <div class="answer-box" id="lensAnswer">Ready.</div>
+            <div class="actions-row">
+                <button class="action-btn" id="copyAnswerBtn">📋 Copy</button>
+                <button class="action-btn" id="popoutAnswerBtn">🪟 Float</button>
+                <button class="action-btn" id="resnapBtn">🔄 Retake</button>
+            </div>
+        </div>
     </div>
+
+    <!-- AI SELECTION OVERLAY TOGGLE -->
+    <div class="setting-card">
+        <div class="setting-row">
+            <div>
+                <div class="setting-label">Text Selection Helper</div>
+                <div class="setting-desc">Show floating button when selecting text</div>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="aiModeToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <!-- MODEL & SERVER CONFIGURATION -->
+    <div class="setting-card">
+        <div class="field-group">
+            <label for="modelSelect">AI Model (Vision & MCQs)</label>
+            <select id="modelSelect" class="field-select">
+                <option value="google/gemini-2.5-flash:free">Gemini 2.5 Flash (Free - Recommended)</option>
+                <option value="meta-llama/llama-3.2-11b-vision-instruct:free">Llama 3.2 Vision (Free)</option>
+                <option value="qwen/qwen-2-vl-72b-instruct:free">Qwen 2 VL (Free)</option>
+                <option value="openrouter/free">OpenRouter Auto (Free)</option>
+            </select>
+        </div>
+
+        <div class="field-group">
+            <label for="serverUrl">Backend Server URL</label>
+            <input type="text" id="serverUrl" class="field-input" placeholder="http://localhost:3000">
+            <button class="save-btn" id="saveBtn">Save Settings</button>
+        </div>
+    </div>
+
+    <div class="footer-note">AI Teacher • Optimized for local lab & LAN testing</div>
 
     <script src="popup.js"></script>
 </body>

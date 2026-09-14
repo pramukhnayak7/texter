@@ -2,20 +2,38 @@
 chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({
         id: "analyzeTextMenu",
-        title: "✨ Analyze Text",
+        title: "✨ Analyze Selected Text",
         contexts: ["selection"]
+    });
+
+    chrome.contextMenus.create({
+        id: "lensScreenMenu",
+        title: "📸 Screen Lens (Solve Question)",
+        contexts: ["page", "image"]
     });
 });
 
 // Handle context menu clicks
 chrome.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId === "analyzeTextMenu" && info.selectionText) {
-        // Open a small popup window for analysis
         chrome.windows.create({
             url: `analysis-window.html?text=${encodeURIComponent(info.selectionText)}`,
             type: "popup",
-            width: 400,
-            height: 500
+            width: 440,
+            height: 560
+        });
+    } else if (info.menuItemId === "lensScreenMenu") {
+        chrome.tabs.captureVisibleTab(null, { format: 'jpeg', quality: 75 }, (dataUrl) => {
+            if (dataUrl) {
+                chrome.storage.local.set({ lastLensImage: dataUrl, lastLensAnswer: '' }, () => {
+                    chrome.windows.create({
+                        url: `analysis-window.html?mode=lens`,
+                        type: "popup",
+                        width: 440,
+                        height: 560
+                    });
+                });
+            }
         });
     }
 });

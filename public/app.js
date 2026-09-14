@@ -133,7 +133,42 @@ if (liveChatBtn) {
     };
 }
 
-/* IMAGE HANDLING */
+/* IMAGE HANDLING & PASTE */
+function handleImageFile(file) {
+    if (!file || !file.type.startsWith("image/")) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            let width = img.width;
+            let height = img.height;
+            const maxDim = 800;
+
+            if (width > height && width > maxDim) {
+                height *= maxDim / width;
+                width = maxDim;
+            } else if (height > maxDim) {
+                width *= maxDim / height;
+                height = maxDim;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+
+            attachedImageBase64 = canvas.toDataURL("image/jpeg", 0.7);
+            imagePreview.src = attachedImageBase64;
+            imagePreviewContainer.style.display = "block";
+            input.focus();
+        };
+        img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
 if (attachBtn) {
     attachBtn.onclick = () => {
         imageInput.click();
@@ -152,40 +187,56 @@ if (removeImageBtn) {
 if (imageInput) {
     imageInput.onchange = (e) => {
         const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement("canvas");
-                let width = img.width;
-                let height = img.height;
-                const maxDim = 800;
-
-                if (width > height && width > maxDim) {
-                    height *= maxDim / width;
-                    width = maxDim;
-                } else if (height > maxDim) {
-                    width *= maxDim / height;
-                    height = maxDim;
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext("2d");
-                ctx.drawImage(img, 0, 0, width, height);
-
-                attachedImageBase64 = canvas.toDataURL("image/jpeg", 0.7);
-                imagePreview.src = attachedImageBase64;
-                imagePreviewContainer.style.display = "block";
-                input.focus();
-            };
-            img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
+        if (file) handleImageFile(file);
     };
 }
+
+/* CLIPBOARD PASTE (Ctrl+V Screenshots) */
+window.addEventListener("paste", (e) => {
+    const clipboardData = e.clipboardData || window.clipboardData;
+    if (!clipboardData) return;
+
+    // Check clipboard items for image data (e.g. from PrintScreen, Win+Shift+S, Snipping Tool)
+    const items = clipboardData.items;
+    if (items) {
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf("image") !== -1) {
+                const file = items[i].getAsFile();
+                if (file) {
+                    e.preventDefault();
+                    handleImageFile(file);
+                    return;
+                }
+            }
+        }
+    }
+
+    // Fallback: check clipboard files
+    const files = clipboardData.files;
+    if (files && files.length > 0) {
+        for (let i = 0; i < files.length; i++) {
+            if (files[i].type.startsWith("image/")) {
+                e.preventDefault();
+                handleImageFile(files[i]);
+                return;
+            }
+        }
+    }
+});
+
+/* DRAG AND DROP IMAGES */
+window.addEventListener("dragover", (e) => e.preventDefault());
+window.addEventListener("drop", (e) => {
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        for (let i = 0; i < e.dataTransfer.files.length; i++) {
+            if (e.dataTransfer.files[i].type.startsWith("image/")) {
+                e.preventDefault();
+                handleImageFile(e.dataTransfer.files[i]);
+                return;
+            }
+        }
+    }
+});
 
 /* PROMPT BUTTONS */
 function usePrompt(text) {
