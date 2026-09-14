@@ -37,6 +37,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const theme = result.sidepanel_theme || 'light';
         document.body.className = theme;
+
+        // Restore chat history & any active ongoing generation
+        loadChatHistory();
     });
 
     // Theme Toggle
@@ -76,13 +79,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Clear Chat
     if (clearChatBtn) {
         clearChatBtn.addEventListener('click', () => {
-            conversation = [];
             messagesContainer.innerHTML = '';
             if (welcomeHint) {
                 messagesContainer.appendChild(welcomeHint);
                 welcomeHint.style.display = 'block';
             }
             clearAttachedImage();
+            activeAssistantBubble = null;
+            isGenerating = false;
+            if (sendBtn) sendBtn.disabled = false;
+            chrome.storage.local.remove(['copilot_chat_history', 'copilot_conversation', 'copilot_active_task']);
+            chrome.runtime.sendMessage({ action: 'clearChatHistory' }).catch(() => {});
         });
     }
 
@@ -138,18 +145,42 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.readAsDataURL(file);
     }
 
+    let activeAssistantBubble = null;
+
+    // Load persisted chat history and active task on startup
+    function loadChatHistory() {
+        chrome.storage.local.get(['copilot_chat_history', 'copilot_active_task'], (res) => {
+            const history = res.copilot_chat_history;
+            if (Array.isArray(history) && history.length > 0) {
+                if (welcomeHint) welcomeHint.style.display = 'none';
+                messagesContainer.innerHTML = '';
+                for (const msg of history) {
+                    appendMessage(msg.role, msg.text, msg.imageUrl);
+                }
+            }
+
+            const task = res.copilot_active_task;
+            if (task && task.inProgress) {
+                isGenerating = true;
+                if (sendBtn) sendBtn.disabled = true;
+                activeAssistantBubble = appendMessage('assistant', task.text || '');
+                if (!task.text) {
+                    activeAssistantBubble.innerHTML = '<span class="status-loading"><span class="dot-pulse"></span> Analyzing & solving...</span>';
+                }
+            }
+        });
+    }
+
     // Handle external text analysis (from right-click context menu or on-page analyze button)
     async function handleAnalyzeText(text) {
         if (!text || isGenerating) return;
         const cleanText = text.trim();
         if (!cleanText) return;
 
-        appendMessage('user', cleanText);
-
         // Fast direct prompt to guarantee answers within 10-15s
         const promptToSend = `Directly solve or analyze this question/text. State the CORRECT OPTION / ANSWER prominently at the top, followed by a concise 1-3 sentence explanation. Be fast and direct:\n\n${cleanText}`;
 
-        await sendChatRequest(promptToSend, null);
+        await sendChatRequest(promptToSend, null, cleanText);
     }
 
     // Check for pending text analysis when sidepanel opens
@@ -163,9 +194,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Listen for real-time messages from background/content script
+    // Listen for real-time messages from background script
     chrome.runtime.onMessage.addListener((msg) => {
-        if (msg.action === 'analyzeSelection' && msg.text) {
+        if (msg.action === 'copilotStreamDelta') {
+            if (!activeAssistantBubble) {
+                activeAssistantBubble = appendMessage('assistant', '');
+                isGenerating = true;
+                if (sendBtn) sendBtn.disabled = true;
+            }
+            if (msg.text) {
+                activeAssistantBubble.textContent = msg.text;
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            } else if (msg.reasoning && !activeAssistantBubble.textContent) {
+                activeAssistantBubble.innerHTML = '<span class="status-loading"><span class="dot-pulse"></span> Formulating explanation...</span>';
+            }
+        } else if (msg.action === 'copilotStreamDone') {
+            if (activeAssistantBubble) {
+                activeAssistantBubble.textContent = msg.text;
+            }
+            activeAssistantBubble = null;
+            isGenerating = false;
+            if (sendBtn) sendBtn.disabled = false;
+            if (promptInput) promptInput.focus();
+        } else if (msg.action === 'copilotStreamError') {
+            if (activeAssistantBubble) {
+                activeAssistantBubble.innerHTML = `<span style="color: var(--error);">⚠️ Error: ${msg.error}</span>`;
+            }
+            activeAssistantBubble = null;
+            isGenerating = false;
+            if (sendBtn) sendBtn.disabled = false;
+        } else if (msg.action === 'analyzeSelection' && msg.text) {
             handleAnalyzeText(msg.text);
         } else if (msg.action === 'triggerLensSnap') {
             if (lensSnapBtn && !isGenerating) {
@@ -188,8 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Fast direct prompt for rapid 10-15s response
                 const prompt = "Directly solve any question or MCQ shown in this screenshot. State the question number, CORRECT OPTION / ANSWER prominently first, followed by a concise 1-2 sentence explanation. Be fast and direct.";
 
-                appendMessage('user', '📸 Screen Lens Capture', compressed);
-                await sendChatRequest(prompt, compressed);
+                await sendChatRequest(prompt, compressed, "📸 Screen Lens Capture");
             } catch (err) {
                 console.error("Lens error:", err);
                 appendMessage('assistant', `⚠️ ${err.message || "Failed to capture active tab"}`);
@@ -227,11 +284,9 @@ document.addEventListener('DOMContentLoaded', () => {
         promptInput.style.height = 'auto';
         clearAttachedImage();
 
-        const displayText = text || (image ? "Solve question in image" : "");
-        appendMessage('user', displayText, image);
-
-        const promptToSend = text || "Please analyze this screenshot and solve the question/MCQ with the exact correct option and brief explanation.";
-        await sendChatRequest(promptToSend, image);
+        const displayText = text || (image ? "📸 Solve question in image" : "");
+        const promptToSend = text || "Directly solve any question/MCQ in this screenshot with the exact correct option and a brief explanation.";
+        await sendChatRequest(promptToSend, image, displayText);
     }
 
     function appendMessage(role, text, imageUrl = null) {
@@ -262,111 +317,27 @@ document.addEventListener('DOMContentLoaded', () => {
         return bubble;
     }
 
-    async function sendChatRequest(text, imageDataUrl) {
+    async function sendChatRequest(promptToSend, imageDataUrl = null, displayText = null) {
+        if (isGenerating) return;
         isGenerating = true;
         if (sendBtn) sendBtn.disabled = true;
 
-        const { serverUrl, selectedModel } = await chrome.storage.local.get(['serverUrl', 'selectedModel']);
-        const baseUrl = serverUrl || 'http://localhost:3000';
-        let model = selectedModel || 'dots-studio/dots-3-note-preview:free';
-        if (model === 'openrouter/free' || model.includes('content-safety')) {
-            model = 'dots-studio/dots-3-note-preview:free';
-        }
+        const userText = displayText !== null ? displayText : promptToSend;
+        appendMessage('user', userText, imageDataUrl);
 
-        // Prepare message payload
-        let userContent;
-        if (imageDataUrl) {
-            userContent = [
-                { type: "text", text: text },
-                { type: "image_url", image_url: { url: imageDataUrl } }
-            ];
-        } else {
-            userContent = text;
-        }
+        activeAssistantBubble = appendMessage('assistant', '');
+        activeAssistantBubble.innerHTML = '<span class="status-loading"><span class="dot-pulse"></span> Analyzing & solving...</span>';
 
-        conversation.push({
-            role: "user",
-            content: userContent
+        const { selectedModel } = await chrome.storage.local.get(['selectedModel']);
+
+        // Send to background service worker so it survives even if sidepanel is closed/hidden
+        chrome.runtime.sendMessage({
+            action: 'startCopilotChat',
+            userDisplayText: userText,
+            userImageUrl: imageDataUrl,
+            promptToSend: promptToSend,
+            model: selectedModel || 'dots-studio/dots-3-note-preview:free'
         });
-
-        const assistantBubble = appendMessage('assistant', '');
-        assistantBubble.innerHTML = '<span class="status-loading"><span class="dot-pulse"></span> Analyzing & solving...</span>';
-
-        try {
-            const response = await fetch(`${baseUrl}/api/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    messages: conversation,
-                    model: model
-                })
-            });
-
-            if (!response.ok) {
-                let errorText = 'Network response was not ok';
-                try {
-                    const errData = await response.json();
-                    errorText = errData.error || errorText;
-                } catch (e) {}
-                throw new Error(errorText);
-            }
-
-            let fullText = '';
-            let reasoningText = '';
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                const chunk = decoder.decode(value, { stream: true });
-                const lines = chunk.split('\n');
-
-                for (const line of lines) {
-                    if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-                        try {
-                            const data = JSON.parse(line.slice(6));
-                            const delta = data.choices?.[0]?.delta?.content;
-                            const reasoningDelta = data.choices?.[0]?.delta?.reasoning;
-
-                            if (reasoningDelta) {
-                                reasoningText += reasoningDelta;
-                                if (!fullText) {
-                                    assistantBubble.innerHTML = '<span class="status-loading"><span class="dot-pulse"></span> Formulating explanation...</span>';
-                                }
-                            }
-
-                            if (delta) {
-                                fullText += delta;
-                                assistantBubble.textContent = fullText;
-                                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                            }
-                        } catch (e) {}
-                    }
-                }
-            }
-
-            // Fallback if model only returned reasoning
-            if (!fullText.trim() && reasoningText.trim()) {
-                fullText = reasoningText;
-                assistantBubble.textContent = fullText;
-            }
-
-            conversation.push({
-                role: "assistant",
-                content: fullText
-            });
-
-        } catch (err) {
-            console.error(err);
-            assistantBubble.innerHTML = `<span style="color: var(--error);">⚠️ Error: ${err.message}</span>`;
-        } finally {
-            isGenerating = false;
-            if (sendBtn) sendBtn.disabled = false;
-            if (promptInput) promptInput.focus();
-        }
     }
 
     function captureActiveTab() {
