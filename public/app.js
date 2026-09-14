@@ -25,6 +25,32 @@ let isLiveChat = false;
 let socket = null;
 const liveChatBtn = document.getElementById("liveChatBtn");
 
+/* THEME TOGGLE (LIGHT / DARK) */
+const themeToggle = document.getElementById("themeToggle");
+
+function initTheme() {
+    const savedTheme = localStorage.getItem("texter_theme") || "dark";
+    applyTheme(savedTheme);
+}
+
+function applyTheme(theme) {
+    document.body.classList.remove("light", "dark");
+    document.body.classList.add(theme);
+    localStorage.setItem("texter_theme", theme);
+    if (themeToggle) {
+        themeToggle.setAttribute("title", theme === "dark" ? "Switch to Light mode" : "Switch to Dark mode");
+    }
+}
+
+if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+        const isDark = !document.body.classList.contains("light");
+        applyTheme(isDark ? "light" : "dark");
+    });
+}
+
+initTheme();
+
 /* HISTORY DELETE BUTTON STYLING */
 const historyStyle = document.createElement("style");
 historyStyle.textContent = `

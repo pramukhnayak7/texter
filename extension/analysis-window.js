@@ -47,6 +47,63 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Ctrl+V paste support in floating window
+    window.addEventListener('paste', (e) => {
+        const clipboardData = e.clipboardData || window.clipboardData;
+        if (!clipboardData) return;
+
+        const items = clipboardData.items;
+        if (items) {
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const file = items[i].getAsFile();
+                    if (file) {
+                        e.preventDefault();
+                        handlePastedFileInWindow(file);
+                        return;
+                    }
+                }
+            }
+        }
+    });
+
+    function handlePastedFileInWindow(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const maxDim = 1000;
+                if (width > height && width > maxDim) {
+                    height *= maxDim / width;
+                    width = maxDim;
+                } else if (height > maxDim) {
+                    width *= maxDim / height;
+                    height = maxDim;
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                const compressed = canvas.toDataURL('image/jpeg', 0.75);
+
+                previewImg.src = compressed;
+                previewBox.style.display = 'block';
+                quoteEl.style.display = 'none';
+                responseEl.className = 'response-box loading';
+                responseEl.textContent = 'Analyzing pasted screenshot...';
+                analyzeImage(compressed).catch((err) => {
+                    responseEl.className = 'response-box error';
+                    responseEl.textContent = `Error: ${err.message}`;
+                });
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
     // Initial load logic
     if (mode === 'lens') {
         // Load latest lens image & answer from storage

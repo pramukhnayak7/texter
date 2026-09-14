@@ -36,6 +36,11 @@ app.use((req, res, next) => {
     next();
 });
 
+app.get("/api/download-extension", (req, res) => {
+    const zipPath = path.join(__dirname, "public", "extension.zip");
+    res.download(zipPath, "ai-teacher-extension.zip");
+});
+
 app.post("/api/chat", async (req, res) => {
     try {
         const { messages, model } = req.body;

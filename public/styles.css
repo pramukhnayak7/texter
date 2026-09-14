@@ -33,6 +33,22 @@ body.dark {
     --red-soft: rgba(255, 59, 48, .10);
 }
 
+body.light {
+    color-scheme: light;
+    --bg: #f8fafc;
+    --sidebar: #f1f5f9;
+    --text: #0f172a;
+    --muted: #64748b;
+    --border: #cbd5e1;
+    --input: #ffffff;
+    --hover: #e2e8f0;
+    --user: #ffffff;
+    --red: #dc2626;
+    --red-bright: #ef4444;
+    --red-dark: #b91c1c;
+    --red-soft: rgba(220, 38, 38, .10);
+}
+
 html,
 body {
     margin: 0;
@@ -874,3 +890,117 @@ textarea {
     border-color: var(--red);
     color: #fff;
 }
+
+/* TOPBAR ACTIONS & THEME TOGGLE */
+.topbar-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.theme-toggle {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all .15s ease;
+}
+
+.theme-toggle:hover {
+    color: var(--text);
+    border-color: var(--red);
+    background: var(--hover);
+}
+
+.theme-toggle .sun-icon {
+    display: block;
+}
+
+.theme-toggle .moon-icon {
+    display: none;
+}
+
+body.light .theme-toggle .sun-icon {
+    display: none;
+}
+
+body.light .theme-toggle .moon-icon {
+    display: block;
+}
+
+/* DOWNLOAD EXTENSION BUTTON (SIDEBAR) */
+.download-ext-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    margin-bottom: 12px;
+    background: #111114;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    transition: all .15s ease;
+}
+
+.download-ext-btn svg {
+    color: var(--red);
+    flex-shrink: 0;
+}
+
+.download-ext-btn:hover {
+    background: var(--red-soft);
+    border-color: var(--red-dark);
+    color: var(--red-bright);
+    transform: translateY(-1px);
+}
+
+/* LIGHT THEME OVERRIDES */
+body.light .main {
+    background:
+        linear-gradient(rgba(0, 0, 0, .03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, .03) 1px, transparent 1px),
+        var(--bg);
+    background-size: 32px 32px;
+}
+
+body.light .topbar {
+    background: rgba(248, 250, 252, .95);
+    border-bottom-color: var(--border);
+}
+
+body.light .new-chat,
+body.light .download-ext-btn,
+body.light #model {
+    background: #ffffff;
+    border-color: var(--border);
+    color: var(--text);
+}
+
+body.light .download-ext-btn:hover,
+body.light .new-chat:hover {
+    background: var(--red-soft);
+    border-color: var(--red-bright);
+}
+
+body.light .composer {
+    background: #ffffff;
+    border-color: var(--border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, .06);
+}
+
+body.light .message.user .bubble {
+    background: #ffffff;
+    border-color: var(--border);
+}
+

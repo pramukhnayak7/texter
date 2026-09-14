@@ -1,10 +1,11 @@
 {
   "name": "openrouter-chat",
   "version": "1.0.0",
-  "description": "",
+  "description": "* Node.js 18+\r * npm\r * OpenRouter API key",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
@@ -14,5 +15,14 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "socket.io": "^4.8.3"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pramukhnayak7/texter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pramukhnayak7/texter/issues"
+  },
+  "homepage": "https://github.com/pramukhnayak7/texter#readme"
 }
