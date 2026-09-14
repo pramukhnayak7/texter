@@ -1,9 +1,26 @@
+// Configure Side Panel behavior (opens on right side when clicking extension icon)
+if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
+    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
+        .catch((error) => console.error("setPanelBehavior error:", error));
+}
+
+// Fallback action click handler
+chrome.action.onClicked.addListener(async (tab) => {
+    if (chrome.sidePanel && chrome.sidePanel.open) {
+        try {
+            await chrome.sidePanel.open({ tabId: tab.id });
+        } catch (e) {
+            console.error("sidePanel.open error:", e);
+        }
+    }
+});
+
 // Create context menu on installation
 chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({
-        id: "analyzeTextMenu",
-        title: "✨ Analyze Selected Text",
-        contexts: ["selection"]
+        id: "openCopilotSidebar",
+        title: "✨ Open AI Copilot Sidebar",
+        contexts: ["all"]
     });
 
     chrome.contextMenus.create({
@@ -14,27 +31,15 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 // Handle context menu clicks
-chrome.contextMenus.onClicked.addListener((info, tab) => {
-    if (info.menuItemId === "analyzeTextMenu" && info.selectionText) {
-        chrome.windows.create({
-            url: `analysis-window.html?text=${encodeURIComponent(info.selectionText)}`,
-            type: "popup",
-            width: 440,
-            height: 560
-        });
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+    if (info.menuItemId === "openCopilotSidebar") {
+        if (chrome.sidePanel && chrome.sidePanel.open) {
+            await chrome.sidePanel.open({ tabId: tab.id });
+        }
     } else if (info.menuItemId === "lensScreenMenu") {
-        chrome.tabs.captureVisibleTab(null, { format: 'jpeg', quality: 75 }, (dataUrl) => {
-            if (dataUrl) {
-                chrome.storage.local.set({ lastLensImage: dataUrl, lastLensAnswer: '' }, () => {
-                    chrome.windows.create({
-                        url: `analysis-window.html?mode=lens`,
-                        type: "popup",
-                        width: 440,
-                        height: 560
-                    });
-                });
-            }
-        });
+        if (chrome.sidePanel && chrome.sidePanel.open) {
+            await chrome.sidePanel.open({ tabId: tab.id });
+        }
     }
 });
 
@@ -44,7 +49,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             .then(data => sendResponse({ success: true, data }))
             .catch(error => sendResponse({ success: false, error: error.message }));
         
-        return true; // Keep the message channel open for async response
+        return true;
     } else if (request.action === 'streamAnalyzeText') {
         streamAnalyzeText(request.text, request.model, sender.tab.id);
         sendResponse({ success: true });
@@ -53,8 +58,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 async function analyzeText(text, model) {
-    const { serverUrl } = await chrome.storage.local.get(['serverUrl']);
+    const { serverUrl, selectedModel } = await chrome.storage.local.get(['serverUrl', 'selectedModel']);
     const baseUrl = serverUrl || 'http://localhost:3000';
+    const activeModel = model || selectedModel || 'openrouter/free';
     
     const response = await fetch(`${baseUrl}/api/chat`, {
         method: 'POST',
@@ -63,7 +69,7 @@ async function analyzeText(text, model) {
         },
         body: JSON.stringify({
             messages: [{ role: 'user', content: `Please analyze and explain the following text: "${text}"` }],
-            model: model || 'openrouter/free'
+            model: activeModel
         })
     });
     
@@ -76,8 +82,9 @@ async function analyzeText(text, model) {
 
 async function streamAnalyzeText(text, model, tabId) {
     try {
-        const { serverUrl } = await chrome.storage.local.get(['serverUrl']);
+        const { serverUrl, selectedModel } = await chrome.storage.local.get(['serverUrl', 'selectedModel']);
         const baseUrl = serverUrl || 'http://localhost:3000';
+        const activeModel = model || selectedModel || 'openrouter/free';
 
         const response = await fetch(`${baseUrl}/api/chat`, {
             method: 'POST',
@@ -86,7 +93,7 @@ async function streamAnalyzeText(text, model, tabId) {
             },
             body: JSON.stringify({
                 messages: [{ role: 'user', content: `Please analyze and explain the following text: "${text}"` }],
-                model: model || 'openrouter/free'
+                model: activeModel
             })
         });
 

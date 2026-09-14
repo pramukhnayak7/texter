@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Teacher - Copilot Sidebar</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --sidebar-bg: #f8fafc;
+            --text: #0f172a;
+            --subtext: #64748b;
+            --border: #e2e8f0;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-gradient: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+            --user-bubble: #f1f5f9;
+            --accent: #10b981;
+            --error: #ef4444;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #111114;
+                --sidebar-bg: #18181c;
+                --text: #f3f4f6;
+                --subtext: #9ca3af;
+                --border: #27272a;
+                --primary: #3b82f6;
+                --primary-hover: #2563eb;
+                --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+                --user-bubble: #1f1f23;
+                --accent: #34d399;
+                --error: #f87171;
+            }
+        }
+
+        body.dark {
+            --bg: #111114;
+            --sidebar-bg: #18181c;
+            --text: #f3f4f6;
+            --subtext: #9ca3af;
+            --border: #27272a;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --user-bubble: #1f1f23;
+        }
+
+        body.light {
+            --bg: #ffffff;
+            --sidebar-bg: #f8fafc;
+            --text: #0f172a;
+            --subtext: #64748b;
+            --border: #e2e8f0;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --user-bubble: #f1f5f9;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* TOPBAR */
+        .topbar {
+            padding: 12px 14px;
+            background: var(--sidebar-bg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: -0.2px;
+        }
+
+        .brand-badge {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--subtext);
+            border-radius: 6px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .icon-btn:hover {
+            color: var(--text);
+            border-color: var(--primary);
+        }
+
+        /* QUICK SCREEN LENS BUTTON */
+        .lens-banner {
+            padding: 10px 14px;
+            background: var(--sidebar-bg);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .lens-btn {
+            width: 100%;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 9px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+            transition: transform 0.1s, opacity 0.15s;
+        }
+
+        .lens-btn:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        .lens-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: white;
+        }
+
+        /* SETTINGS PANEL (COLLAPSIBLE) */
+        .settings-panel {
+            display: none;
+            padding: 12px 14px;
+            background: var(--sidebar-bg);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .settings-panel.open {
+            display: block;
+        }
+
+        .setting-group {
+            margin-bottom: 8px;
+        }
+
+        .setting-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--subtext);
+            margin-bottom: 4px;
+        }
+
+        .setting-input, .setting-select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 12px;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .setting-input:focus, .setting-select:focus {
+            border-color: var(--primary);
+        }
+
+        .save-settings-btn {
+            width: 100%;
+            margin-top: 6px;
+            padding: 6px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* CHAT MESSAGE LIST */
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .welcome-hint {
+            text-align: center;
+            color: var(--subtext);
+            font-size: 12px;
+            margin: auto 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .welcome-hint .hint-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+            max-width: 90%;
+            font-size: 13px;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .message.user {
+            align-self: flex-end;
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+            max-width: 100%;
+        }
+
+        .bubble {
+            padding: 10px 12px;
+            border-radius: 10px;
+        }
+
+        .message.user .bubble {
+            background: var(--primary);
+            color: #ffffff;
+            border-bottom-right-radius: 2px;
+        }
+
+        .message.assistant .bubble {
+            background: var(--user-bubble);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 2px;
+            white-space: pre-wrap;
+            user-select: text;
+        }
+
+        .bubble img {
+            max-width: 100%;
+            max-height: 180px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            display: block;
+            border: 1px solid var(--border);
+        }
+
+        .status-loading {
+            font-size: 11px;
+            color: var(--primary);
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .dot-pulse {
+            width: 6px;
+            height: 6px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: pulse 1.2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+
+        /* COMPOSER (PINNED AT BOTTOM) */
+        .composer-card {
+            padding: 10px 14px;
+            background: var(--sidebar-bg);
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .preview-bar {
+            display: none;
+            padding-bottom: 8px;
+        }
+
+        .preview-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .preview-thumb {
+            max-height: 70px;
+            max-width: 100%;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            display: block;
+        }
+
+        .remove-img-btn {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: var(--error);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 6px 8px;
+            transition: border-color 0.15s;
+        }
+
+        .input-row:focus-within {
+            border-color: var(--primary);
+        }
+
+        .prompt-textarea {
+            flex: 1;
+            border: none;
+            background: transparent;
+            color: var(--text);
+            font-size: 13px;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+            max-height: 120px;
+            line-height: 1.4;
+        }
+
+        .attach-btn, .send-btn {
+            background: transparent;
+            border: none;
+            color: var(--subtext);
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.15s;
+        }
+
+        .attach-btn:hover {
+            color: var(--text);
+        }
+
+        .send-btn {
+            background: var(--primary);
+            color: white;
+            width: 28px;
+            height: 28px;
+        }
+
+        .send-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .composer-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-size: 10px;
+            color: var(--subtext);
+        }
+    </style>
+</head>
+<body class="light">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div class="brand">
+            <span>✨ AI Teacher</span>
+            <span class="brand-badge">COPILOT</span>
+        </div>
+        <div class="topbar-actions">
+            <button class="icon-btn" id="themeToggleBtn" title="Toggle Light / Dark theme">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line></svg>
+            </button>
+            <button class="icon-btn" id="clearChatBtn" title="Clear conversation">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
+            <button class="icon-btn" id="settingsToggleBtn" title="Settings & Model">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- QUICK SCREEN LENS ACTION -->
+    <div class="lens-banner">
+        <button class="lens-btn" id="lensSnapBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+            <span>📸 Screen Lens: Solve MCQ on Tab</span>
+        </button>
+    </div>
+
+    <!-- SETTINGS PANEL -->
+    <div class="settings-panel" id="settingsPanel">
+        <div class="setting-group">
+            <label for="modelSelect">Free Model</label>
+            <select id="modelSelect" class="setting-select">
+                <option value="openrouter/free">OpenRouter Auto (Free - Recommended)</option>
+                <option value="inclusionai/ling-3.0-flash-vl:free">Ling 3.0 Vision (Free)</option>
+                <option value="google/gemma-4-31b-it:free">Gemma 4 31B (Free)</option>
+                <option value="google/gemma-4-26b-a4b-it:free">Gemma 4 26B (Free)</option>
+            </select>
+        </div>
+        <div class="setting-group">
+            <label for="serverUrlInput">Local Server URL</label>
+            <input type="text" id="serverUrlInput" class="setting-input" placeholder="http://localhost:3000">
+        </div>
+        <button class="save-settings-btn" id="saveSettingsBtn">Save Settings</button>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="messages" id="messagesContainer">
+        <div class="welcome-hint" id="welcomeHint">
+            <div class="hint-icon">✦</div>
+            <strong>AI Teacher Copilot Ready</strong><br>
+            • Click <strong>Screen Lens</strong> to snap and solve any question on the current tab.<br>
+            • Or paste a screenshot here with <strong>Ctrl+V</strong>.
+        </div>
+    </div>
+
+    <!-- COMPOSER -->
+    <div class="composer-card">
+        <div class="preview-bar" id="previewBar">
+            <div class="preview-wrapper">
+                <img id="previewImg" class="preview-thumb" alt="Screenshot Preview">
+                <button type="button" id="removeImgBtn" class="remove-img-btn">×</button>
+            </div>
+        </div>
+
+        <div class="input-row">
+            <input type="file" id="fileInput" accept="image/*" style="display: none;">
+            <button type="button" id="attachFileBtn" class="attach-btn" title="Attach image">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+            <textarea id="promptInput" class="prompt-textarea" placeholder="Ask or paste screenshot (Ctrl+V)..." rows="1"></textarea>
+            <button type="button" id="sendBtn" class="send-btn" title="Send (Enter)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+        </div>
+
+        <div class="composer-footer">
+            <span>Paste screenshots with Ctrl+V</span>
+            <span id="activeModelLabel">openrouter/free</span>
+        </div>
+    </div>
+
+    <script src="sidepanel.js"></script>
+</body>
+</html>

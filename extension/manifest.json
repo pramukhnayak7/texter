@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "AI Teacher Integration",
-  "version": "1.0",
-  "description": "Floating AI assistant for analyzing selected text on any webpage.",
+  "name": "AI Teacher - Copilot Sidebar & Screen Lens",
+  "version": "1.3",
+  "description": "Right-side Copilot AI Assistant & Google Lens MCQ solver for Chrome & Edge.",
   "permissions": [
+    "sidePanel",
     "activeTab",
     "scripting",
     "storage",
@@ -16,6 +17,9 @@
   "background": {
     "service_worker": "background.js"
   },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
@@ -24,7 +28,6 @@
     }
   ],
   "action": {
-    "default_popup": "popup.html",
-    "default_title": "Toggle AI Mode"
+    "default_title": "Open AI Teacher Copilot"
   }
 }
