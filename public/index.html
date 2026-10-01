@@ -93,9 +93,10 @@
 
                 </div>
 
-                <button id="themeToggle" class="theme-toggle" title="Toggle Light / Dark mode" aria-label="Toggle theme">
+                <button id="themeToggle" class="theme-toggle" title="Cycle color theme" aria-label="Cycle color theme">
                     <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
                     <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    <span class="vscode-icon" aria-hidden="true">&lt;/&gt;</span>
                 </button>
             </div>
 
@@ -105,6 +106,50 @@
         <!-- CHAT -->
 
         <section class="chat" id="chat">
+
+            <div class="global-chat-view" id="globalChatView" hidden>
+                <section class="global-chat-auth" id="globalChatAuth" aria-labelledby="globalChatTitle">
+                    <div class="global-chat-auth-header">
+                        <div class="global-chat-kicker">GLOBAL // MEMBERS</div>
+                        <h2 id="globalChatTitle">Join the conversation</h2>
+                        <p>Sign in or create an account to participate in global chat.</p>
+                    </div>
+
+                    <div class="global-auth-tabs" role="tablist" aria-label="Global chat account">
+                        <button type="button" id="globalLoginTab" class="active" role="tab" aria-selected="true">Sign in</button>
+                        <button type="button" id="globalSignupTab" role="tab" aria-selected="false">Create account</button>
+                    </div>
+
+                    <form id="globalAuthForm" class="global-auth-form">
+                        <label class="global-auth-field" id="globalDisplayNameField" hidden>
+                            Display name
+                            <input id="globalDisplayName" type="text" maxlength="40" autocomplete="nickname" placeholder="How others see you">
+                        </label>
+                        <label class="global-auth-field">
+                            Email
+                            <input id="globalEmail" type="email" autocomplete="email" required placeholder="you@example.com">
+                        </label>
+                        <label class="global-auth-field">
+                            Password
+                            <input id="globalPassword" type="password" minlength="6" autocomplete="current-password" required placeholder="At least 6 characters">
+                        </label>
+                        <button class="global-auth-submit" id="globalAuthSubmit" type="submit">Sign in</button>
+                        <p class="global-auth-status" id="globalAuthStatus" role="status" aria-live="polite"></p>
+                    </form>
+                </section>
+
+                <section class="global-chat-room" id="globalChatRoom" aria-label="Global chat room" hidden>
+                    <header class="global-chat-room-header">
+                        <div>
+                            <strong id="globalChatIdentity"></strong>
+                            <span class="global-chat-online"><span></span> <span id="globalChatConnectionLabel">Connecting...</span></span>
+                        </div>
+                        <button type="button" class="global-chat-signout" id="globalSignOut">Sign out</button>
+                    </header>
+                    <p class="global-chat-status" id="globalChatStatus" role="status" aria-live="polite"></p>
+                    <div class="global-chat-messages" id="globalChatMessages" aria-live="polite"></div>
+                </section>
+            </div>
 
             <div class="welcome" id="welcome">
 
@@ -167,7 +212,7 @@
 
 </div>
 
-<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="app.js"></script>
 
 </body>

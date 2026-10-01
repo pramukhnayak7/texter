@@ -4,26 +4,11 @@ dns.setDefaultResultOrder("ipv4first");
 const express = require("express");
 const dotenv = require("dotenv");
 const path = require("path");
-const http = require("http");
-const { Server } = require("socket.io");
 
 dotenv.config();
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
 const PORT = process.env.PORT || 3000;
-
-io.on("connection", (socket) => {
-    console.log("A user connected");
-    socket.on("chat message", (msg) => {
-        // Broadcast the message to all connected clients except the sender
-        socket.broadcast.emit("chat message", msg);
-    });
-    socket.on("disconnect", () => {
-        console.log("A user disconnected");
-    });
-});
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.static(path.join(__dirname, "public")));
@@ -37,6 +22,14 @@ app.use((req, res, next) => {
         return res.sendStatus(200);
     }
     next();
+});
+
+app.get("/api/supabase-config", (_req, res) => {
+    res.set("Cache-Control", "no-store");
+    res.json({
+        url: process.env.SUPABASE_URL || null,
+        anonKey: process.env.SUPABASE_ANON_KEY || null
+    });
 });
 
 app.get("/api/download-extension", (req, res) => {
@@ -124,6 +117,6 @@ app.post("/api/chat", async (req, res) => {
 app.use((req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
-server.listen(PORT, "0.0.0.0", () => {
+app.listen(PORT, "0.0.0.0", () => {
     console.log(`Chat running on http://0.0.0.0:${PORT}`);
 });

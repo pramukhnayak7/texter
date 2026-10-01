@@ -22,30 +22,61 @@ let currentChatId = null;
 let generating = false;
 
 let isLiveChat = false;
-let socket = null;
 const liveChatBtn = document.getElementById("liveChatBtn");
+const composerArea = document.querySelector(".composer-area");
+const globalChatView = document.getElementById("globalChatView");
+const globalChatAuth = document.getElementById("globalChatAuth");
+const globalChatRoom = document.getElementById("globalChatRoom");
+const globalAuthForm = document.getElementById("globalAuthForm");
+const globalLoginTab = document.getElementById("globalLoginTab");
+const globalSignupTab = document.getElementById("globalSignupTab");
+const globalDisplayNameField = document.getElementById("globalDisplayNameField");
+const globalDisplayName = document.getElementById("globalDisplayName");
+const globalEmail = document.getElementById("globalEmail");
+const globalPassword = document.getElementById("globalPassword");
+const globalAuthSubmit = document.getElementById("globalAuthSubmit");
+const globalAuthStatus = document.getElementById("globalAuthStatus");
+const globalChatIdentity = document.getElementById("globalChatIdentity");
+const globalChatStatus = document.getElementById("globalChatStatus");
+const globalChatConnectionLabel = document.getElementById("globalChatConnectionLabel");
+const globalChatMessages = document.getElementById("globalChatMessages");
+const globalSignOut = document.getElementById("globalSignOut");
+
+let supabaseClient = null;
+let globalChatSession = null;
+let globalChatChannel = null;
+let globalChatAuthMode = "login";
+let globalChatUserId = null;
+const renderedGlobalMessageIds = new Set();
 
 /* THEME TOGGLE (LIGHT / DARK) */
 const themeToggle = document.getElementById("themeToggle");
 
 function initTheme() {
-    const savedTheme = localStorage.getItem("texter_theme") || "light";
-    applyTheme(savedTheme);
+    const savedTheme = localStorage.getItem("texter_theme");
+    const themes = ["light", "dark", "vscode"];
+    applyTheme(themes.includes(savedTheme) ? savedTheme : "light");
 }
 
 function applyTheme(theme) {
-    document.body.classList.remove("light", "dark");
+    document.body.classList.remove("light", "dark", "vscode");
     document.body.classList.add(theme);
     localStorage.setItem("texter_theme", theme);
     if (themeToggle) {
-        themeToggle.setAttribute("title", theme === "dark" ? "Switch to Light mode" : "Switch to Dark mode");
+        const themeNames = { light: "Light", dark: "Dark", vscode: "VS Code" };
+        const themes = ["light", "dark", "vscode"];
+        const nextTheme = themeNames[themes[(themes.indexOf(theme) + 1) % themes.length]];
+        themeToggle.setAttribute("title", `Theme: ${themeNames[theme]} (click for ${nextTheme})`);
+        themeToggle.setAttribute("aria-label", `Theme: ${themeNames[theme]}. Activate to switch to ${nextTheme}.`);
     }
 }
 
 if (themeToggle) {
     themeToggle.addEventListener("click", () => {
-        const isDark = !document.body.classList.contains("light");
-        applyTheme(isDark ? "light" : "dark");
+        const themes = ["light", "dark", "vscode"];
+        const currentTheme = themes.find(theme => document.body.classList.contains(theme)) || "light";
+        const nextTheme = themes[(themes.indexOf(currentTheme) + 1) % themes.length];
+        applyTheme(nextTheme);
     });
 }
 
@@ -133,6 +164,7 @@ if (sidebarOverlay) {
 /* NEW CHAT & URL ROUTING */
 function switchToNewChat(updateUrl = true) {
     isLiveChat = false;
+    leaveGlobalChat();
     messages = [];
     currentChatId = null;
 
@@ -143,6 +175,8 @@ function switchToNewChat(updateUrl = true) {
     if (h1) h1.textContent = "How can I help?";
     if (p) p.textContent = "Ask anything, attach or paste screenshots with Ctrl+V for MCQs, and choose a free model above.";
     welcome.style.display = "block";
+    composerArea.hidden = false;
+    input.placeholder = "Message AI or paste screenshot (Ctrl+V)...";
 
     input.value = "";
     autoResize();
@@ -163,29 +197,13 @@ if (newChat) {
 function switchToLiveChat(updateUrl = true) {
     isLiveChat = true;
     chat.innerHTML = "";
-    chat.appendChild(welcome);
-    const h1 = welcome.querySelector("h1");
-    const p = welcome.querySelector("p");
-    if (h1) h1.textContent = "Global Live Chat";
-    if (p) p.textContent = "Chat with other users in real-time.";
-    welcome.style.display = "block";
-    
-    if (!socket && typeof io !== "undefined") {
-        socket = io();
-        socket.on("chat message", (msg) => {
-            welcome.style.display = "none";
-            const wrapper = document.createElement("div");
-            wrapper.className = "message assistant";
-            wrapper.innerHTML = `<div class="role" style="background:#ff9500">U</div><div class="bubble"><span style="white-space: pre-wrap">${escapeHtml(msg)}</span></div>`;
-            chat.appendChild(wrapper);
-            chat.scrollTop = chat.scrollHeight;
-        });
-    }
-    
+    chat.appendChild(globalChatView);
+    globalChatView.hidden = false;
+    composerArea.hidden = true;
     input.value = "";
     autoResize();
-    input.focus();
     closeMobileSidebar();
+    void initializeGlobalChat();
 
     if (updateUrl && window.location.pathname !== "/global-chat") {
         window.history.pushState({ page: "global-chat" }, "", "/global-chat");
@@ -194,6 +212,264 @@ function switchToLiveChat(updateUrl = true) {
 
 if (liveChatBtn) {
     liveChatBtn.onclick = () => switchToLiveChat(true);
+}
+
+function setGlobalAuthMode(mode) {
+    globalChatAuthMode = mode;
+    const isSignup = mode === "signup";
+    globalDisplayNameField.hidden = !isSignup;
+    globalDisplayName.required = isSignup;
+    globalPassword.autocomplete = isSignup ? "new-password" : "current-password";
+    globalAuthSubmit.textContent = isSignup ? "Create account" : "Sign in";
+    globalLoginTab.classList.toggle("active", !isSignup);
+    globalSignupTab.classList.toggle("active", isSignup);
+    globalLoginTab.setAttribute("aria-selected", String(!isSignup));
+    globalSignupTab.setAttribute("aria-selected", String(isSignup));
+    globalAuthStatus.textContent = "";
+    delete globalAuthStatus.dataset.state;
+}
+
+globalLoginTab.addEventListener("click", () => setGlobalAuthMode("login"));
+globalSignupTab.addEventListener("click", () => setGlobalAuthMode("signup"));
+
+async function initializeGlobalChat() {
+    globalAuthStatus.textContent = "Connecting to Supabase...";
+
+    try {
+        if (!supabaseClient) {
+            if (!window.supabase?.createClient) {
+                throw new Error("Supabase client library could not be loaded.");
+            }
+
+            const response = await fetch("/api/supabase-config");
+            const config = await response.json();
+            if (!response.ok || !config.url || !config.anonKey) {
+                throw new Error("Global chat is not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY to the server environment.");
+            }
+
+            supabaseClient = window.supabase.createClient(config.url, config.anonKey);
+            supabaseClient.auth.onAuthStateChange((_event, session) => {
+                globalChatSession = session;
+                setTimeout(() => {
+                    if (isLiveChat) void updateGlobalChatView();
+                }, 0);
+            });
+        }
+
+        const { data, error } = await supabaseClient.auth.getSession();
+        if (error) throw error;
+        globalChatSession = data.session;
+        await updateGlobalChatView();
+    } catch (error) {
+        globalAuthStatus.textContent = error.message;
+        globalAuthStatus.dataset.state = "error";
+    }
+}
+
+async function updateGlobalChatView() {
+    if (!isLiveChat) return;
+
+    const session = globalChatSession;
+    globalChatAuth.hidden = Boolean(session);
+    globalChatRoom.hidden = !session;
+    composerArea.hidden = !session;
+
+    if (!session) {
+        globalChatUserId = null;
+        renderedGlobalMessageIds.clear();
+        globalChatMessages.replaceChildren();
+        input.placeholder = "Sign in to send a message...";
+        if (globalChatChannel) {
+            void supabaseClient.removeChannel(globalChatChannel);
+            globalChatChannel = null;
+        }
+        return;
+    }
+
+    const user = session.user;
+    const name = user.user_metadata?.display_name || user.email?.split("@")[0] || "Member";
+    globalChatIdentity.textContent = `Signed in as ${name}`;
+    input.placeholder = "Message the global chat...";
+
+    if (globalChatUserId !== user.id) {
+        globalChatUserId = user.id;
+        renderedGlobalMessageIds.clear();
+        globalChatMessages.replaceChildren();
+        if (globalChatChannel) {
+            void supabaseClient.removeChannel(globalChatChannel);
+            globalChatChannel = null;
+        }
+    }
+
+    subscribeToGlobalChat();
+    await loadGlobalChatMessages();
+}
+
+function subscribeToGlobalChat() {
+    if (globalChatChannel || !supabaseClient) return;
+
+    globalChatChannel = supabaseClient
+        .channel("global-chat-room")
+        .on("postgres_changes", {
+            event: "INSERT",
+            schema: "public",
+            table: "global_chat_messages"
+        }, payload => renderGlobalChatMessage(payload.new))
+        .subscribe(status => {
+            if (status === "SUBSCRIBED") {
+                globalChatConnectionLabel.textContent = "Connected";
+                globalChatStatus.textContent = "";
+                delete globalChatStatus.dataset.state;
+            } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+                globalChatConnectionLabel.textContent = "Connection issue";
+                globalChatStatus.textContent = "Realtime connection failed. Check that the SQL schema is installed and Realtime is enabled.";
+                globalChatStatus.dataset.state = "error";
+            }
+        });
+}
+
+async function loadGlobalChatMessages() {
+    globalChatStatus.textContent = "Loading recent messages...";
+    const { data, error } = await supabaseClient
+        .from("global_chat_messages")
+        .select("id, user_id, display_name, content, created_at")
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+    if (error) {
+        globalChatStatus.textContent = error.message;
+        globalChatStatus.dataset.state = "error";
+        return;
+    }
+
+    data.reverse().forEach(renderGlobalChatMessage);
+    if (globalChatStatus.textContent === "Loading recent messages...") {
+        globalChatStatus.textContent = "";
+        delete globalChatStatus.dataset.state;
+    }
+}
+
+function renderGlobalChatMessage(message) {
+    if (!message || renderedGlobalMessageIds.has(message.id)) return;
+    renderedGlobalMessageIds.add(message.id);
+
+    const wrapper = document.createElement("article");
+    wrapper.className = "global-chat-message";
+
+    const avatar = document.createElement("div");
+    avatar.className = "global-chat-message-avatar";
+    avatar.textContent = (message.display_name || "M").slice(0, 1).toUpperCase();
+
+    const body = document.createElement("div");
+    body.className = "global-chat-message-body";
+
+    const meta = document.createElement("div");
+    meta.className = "global-chat-message-meta";
+    const name = document.createElement("strong");
+    name.textContent = message.display_name || "Member";
+    const time = document.createElement("time");
+    time.dateTime = message.created_at;
+    time.textContent = new Date(message.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
+    const text = document.createElement("p");
+    text.className = "global-chat-message-text";
+    text.textContent = message.content;
+
+    meta.append(name, time);
+    body.append(meta, text);
+    wrapper.append(avatar, body);
+    globalChatMessages.appendChild(wrapper);
+    globalChatMessages.scrollTop = globalChatMessages.scrollHeight;
+}
+
+globalAuthForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    globalAuthSubmit.disabled = true;
+    globalAuthStatus.textContent = "";
+    delete globalAuthStatus.dataset.state;
+
+    const email = globalEmail.value.trim();
+    const password = globalPassword.value;
+    let result;
+
+    try {
+        if (!supabaseClient) throw new Error("Supabase is not configured. Add the project URL and anon key to the server environment.");
+
+        if (globalChatAuthMode === "signup") {
+            const displayName = globalDisplayName.value.trim().replace(/\s+/g, " ");
+            if (!displayName) throw new Error("Enter a display name.");
+            result = await supabaseClient.auth.signUp({
+                email,
+                password,
+                options: { data: { display_name: displayName } }
+            });
+        } else {
+            result = await supabaseClient.auth.signInWithPassword({ email, password });
+        }
+
+        if (result.error) throw result.error;
+        if (globalChatAuthMode === "signup" && !result.data.session) {
+            globalAuthStatus.textContent = "Check your email to confirm your account, then sign in.";
+            return;
+        }
+
+        globalChatSession = result.data.session;
+        await updateGlobalChatView();
+    } catch (error) {
+        globalAuthStatus.textContent = error.message || "Authentication failed.";
+        globalAuthStatus.dataset.state = "error";
+    } finally {
+        globalAuthSubmit.disabled = false;
+    }
+});
+
+globalSignOut.addEventListener("click", async () => {
+    if (!supabaseClient) return;
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) {
+        globalChatStatus.textContent = error.message;
+        globalChatStatus.dataset.state = "error";
+        return;
+    }
+    globalChatSession = null;
+    await updateGlobalChatView();
+});
+
+async function sendGlobalChatMessage(text) {
+    const user = globalChatSession?.user;
+    if (!user || !supabaseClient) return;
+    if (text.length > 1000) {
+        globalChatStatus.textContent = "Messages must be 1,000 characters or fewer.";
+        globalChatStatus.dataset.state = "error";
+        return;
+    }
+
+    const displayName = user.user_metadata?.display_name || user.email?.split("@")[0] || "Member";
+    const { data, error } = await supabaseClient
+        .from("global_chat_messages")
+        .insert({ user_id: user.id, display_name: displayName, content: text })
+        .select("id, user_id, display_name, content, created_at")
+        .single();
+
+    if (error) {
+        globalChatStatus.textContent = error.message;
+        globalChatStatus.dataset.state = "error";
+        return;
+    }
+
+    globalChatStatus.textContent = "";
+    delete globalChatStatus.dataset.state;
+    renderGlobalChatMessage(data);
+    input.value = "";
+    autoResize();
+}
+
+function leaveGlobalChat() {
+    if (globalChatChannel && supabaseClient) {
+        void supabaseClient.removeChannel(globalChatChannel);
+        globalChatChannel = null;
+    }
+    globalChatView.hidden = true;
 }
 
 /* IMAGE HANDLING & PASTE */
@@ -441,18 +717,8 @@ composer.addEventListener("submit", async e => {
     if (!text && !attachedImageBase64 || generating) return;
 
     if (isLiveChat) {
-        if (!text) return;
-        if (socket) socket.emit("chat message", text);
-        
-        welcome.style.display = "none";
-        const wrapper = document.createElement("div");
-        wrapper.className = "message user";
-        wrapper.innerHTML = `<div class="role">You</div><div class="bubble"><span style="white-space: pre-wrap">${escapeHtml(text)}</span></div>`;
-        chat.appendChild(wrapper);
-        chat.scrollTop = chat.scrollHeight;
-        
-        input.value = "";
-        autoResize();
+        if (!text || !globalChatSession) return;
+        await sendGlobalChatMessage(text);
         return;
     }
 
