@@ -3,6 +3,14 @@ node_modules/
 
 # Environment variables / API keys
 .env
+.env.*
+!.env.example
+
+# Python runtime files
+__pycache__/
+*.py[cod]
+.venv/
+backend/data/
 
 # Logs
 *.log

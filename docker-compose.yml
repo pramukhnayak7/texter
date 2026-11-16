@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: openrouter-chat-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ragdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ragdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  rag:
+    build: ./backend
+    container_name: openrouter-chat-rag
+    env_file:
+      - .env
+    ports:
+      - "8001:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - PORT=8000
+      - WORKERS=1
+      - DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/ragdb
+      - SESSION_SECRET_KEY=${SESSION_SECRET_KEY:-dev-secret-change-in-production}
+      - OMP_NUM_THREADS=1
+      - OPENBLAS_NUM_THREADS=1
+      - MKL_NUM_THREADS=1
+      - DEFAULT_ADMIN_USERNAME=${DEFAULT_ADMIN_USERNAME:-admin}
+      - DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD:-admin123}
+    volumes:
+      - ./backend/data:/app/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

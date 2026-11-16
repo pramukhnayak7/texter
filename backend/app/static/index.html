@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenRouter Chat RAG — NotebookLM Style</title>
+<style>
+  :root{
+    --bg:#0f172a;
+    --card:#1e293b;
+    --card-hover:#334155;
+    --accent:#38bdf8;
+    --accent-soft:rgba(56,189,248,0.12);
+    --text:#f8fafc;
+    --muted:#94a3b8;
+    --border:rgba(255,255,255,0.08);
+    --success:#4ade80;
+    --danger:#f87171;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.5;
+    min-height:100vh;
+  }
+  .glass{
+    background:rgba(30,41,59,0.6);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+  }
+  /* ---------- Auth screen ---------- */
+  #authWrap{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem
+  }
+  .auth-card{
+    width:100%;max-width:400px;padding:2rem
+  }
+  .auth-card h1{font-size:1.5rem;margin-bottom:.5rem;color:var(--accent)}
+  .auth-card p{color:var(--muted);font-size:.9rem;margin-bottom:1.5rem}
+  .auth-tabs{display:flex;gap:.5rem;margin-bottom:1.5rem;border-bottom:1px solid var(--border);padding-bottom:.5rem}
+  .auth-tab{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;padding:.5rem;font-size:.9rem}
+  .auth-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .form-group{margin-bottom:1rem}
+  .form-group label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:.4rem}
+  .form-group input{width:100%;background:rgba(0,0,0,0.3);border:1px solid var(--border);color:var(--text);padding:.65rem .9rem;border-radius:10px;font-size:.95rem;outline:none}
+  .form-group input:focus{border-color:var(--accent)}
+  .auth-actions{display:flex;gap:.5rem;margin-top:1rem}
+  .btn{
+    border:none;border-radius:10px;padding:.6rem 1rem;cursor:pointer;font-weight:600;
+    font-size:.9rem;display:inline-flex;align-items:center;gap:.4rem;transition:all .2s
+  }
+  .btn-primary{background:var(--accent);color:#000;flex:1;justify-content:center}
+  .btn-primary:hover{background:#7dd3fc}
+  .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border);flex:1;justify-content:center}
+  .btn-ghost:hover{background:var(--card-hover)}
+  .btn-danger{background:var(--danger);color:#fff}
+  .btn-danger:hover{background:#fb7185}
+  .switch{margin-top:1rem;font-size:.9rem;color:var(--muted);text-align:center}
+  .switch a{color:var(--accent);text-decoration:none;cursor:pointer}
+  .switch a:hover{text-decoration:underline}
+  .error-msg{color:var(--danger);font-size:.85rem;margin-top:.5rem;display:none}
+  /* ---------- Header ---------- */
+  header{
+    position:sticky;top:0;z-index:50;
+    border-bottom:1px solid var(--border);
+    background:rgba(15,23,42,0.8);
+    backdrop-filter:blur(10px);
+    padding:.75rem 1rem
+  }
+  .header-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+  .brand{display:flex;align-items:center;gap:.75rem;font-weight:700;letter-spacing:-.5px;color:var(--accent)}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--success);box-shadow:0 0 10px var(--success)}
+  .brand span{font-size:1.15rem}
+  .user-info{display:flex;align-items:center;gap:.75rem;color:var(--muted);font-size:.9rem}
+  .user-badge{background:var(--accent-soft);color:var(--accent);border:1px solid var(--border);padding:.15rem .6rem;border-radius:999px;font-size:.8rem;font-weight:600}
+  .controls{display:flex;align-items:center;gap:.5rem}
+  /* ---------- Layout ---------- */
+  #app{display:none}
+  main{max-width:1400px;margin:0 auto;padding:1.25rem 1rem;display:grid;
+    grid-template-columns:340px 1fr;gap:1.25rem;align-items:start}
+  @media (max-width:900px){main{grid-template-columns:1fr}}
+  /* ---------- Left: sources ---------- */
+  .panel{padding:1.25rem}
+  .panel h2{font-size:1rem;margin-bottom:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .source-list{display:flex;flex-direction:column;gap:.5rem;max-height:70vh;overflow-y:auto;padding-right:4px}
+  .source-item{
+    background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.75rem;
+    display:flex;align-items:center;justify-content:space-between;gap:.75rem
+  }
+  .source-item:hover{border-color:rgba(56,189,248,0.4)}
+  .source-info{display:flex;flex-direction:column;gap:2px}
+  .source-name{font-weight:600;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .source-meta{font-size:.78rem;color:var(--muted)}
+  .remove-source{background:transparent;border:none;color:var(--danger);font-size:1.2rem;line-height:1;cursor:pointer;padding:0 4px}
+  .remove-source:hover{color:#fca5a5}
+  .empty{color:var(--muted);font-size:.9rem;text-align:center;padding:2rem}
+  .upload-area{
+    border:2px dashed var(--border);border-radius:12px;padding:1.5rem;text-align:center;
+    margin-bottom:1rem;cursor:pointer;transition:border-color .2s
+  }
+  .upload-area:hover{border-color:var(--accent);background:var(--accent-soft)}
+  .upload-area input{display:none}
+  .upload-hint{font-size:.85rem;color:var(--muted)}
+  /* ---------- Right: chat ---------- */
+  .chat-wrap{display:flex;flex-direction:column;height:82vh;max-height:700px}
+  .messages{flex:1;overflow-y:auto;padding:1rem 0;display:flex;flex-direction:column;gap:1rem;scroll-behavior:smooth}
+  .msg{display:flex;gap:.75rem;max-width:82%;animation:fadeIn .3s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .msg.user{margin-left:auto;flex-direction:row-reverse}
+  .bubble{padding:.85rem 1.1rem;border-radius:14px;font-size:.95rem;line-height:1.55;white-space:pre-wrap}
+  .msg.user .bubble{background:var(--accent);color:#000;border-bottom-right-radius:4px}
+  .msg.bot .bubble{background:var(--card);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px}
+  .avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.9rem;flex-shrink:0}
+  .msg.user .avatar{background:var(--accent);color:#000}
+  .msg.bot .avatar{background:var(--card);border:1px solid var(--border);color:var(--accent)}
+  .meta{font-size:.7rem;color:var(--muted);margin-top:4px}
+  .typing{font-size:.8rem;color:var(--muted);font-style:italic}
+  .spinner span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--muted);margin:0 1px;animation:bounce 1.4s infinite both}
+  .spinner span:nth-child(2){animation-delay:.2s}.spinner span:nth-child(3){animation-delay:.4s}
+  @keyframes bounce{0%,80%,100%{transform:scale(1)}40%{transform:scale(1.5)}}
+  /* ---------- Input ---------- */
+  .input-wrap{border-top:1px solid var(--border);padding:1rem;display:flex;gap:.5rem;background:rgba(15,23,42,0.4)}
+  .input-wrap textarea{
+    flex:1;background:transparent;border:none;color:var(--text);resize:none;min-height:44px;
+    font:inherit;padding:.6rem .9rem;outline:none;font-size:.95rem
+  }
+  .input-wrap button{background:var(--accent);color:#000;border:none;border-radius:10px;width:44px;height:44px;cursor:pointer;display:grid;place-items:center;font-size:1.1rem}
+  .input-wrap button:hover{background:#7dd3fc}
+  .input-wrap button:disabled{opacity:.5;cursor:not-allowed}
+  /* ---------- Citations ---------- */
+  .citations{margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border)}
+  .cite{font-size:.8rem;color:var(--muted);margin:.25rem 0;padding-left:.9rem;border-left:2px solid var(--border)}
+  .cite strong{color:var(--text);font-size:.85rem}
+  /* ---------- Toast ---------- */
+  #toast{position:fixed;bottom:1.2rem;right:1.2rem;background:var(--card);border:1px solid var(--border);color:var(--text);
+    padding:.8rem 1rem;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.4);transform:translateY(120px);transition:transform .3s;z-index:100;opacity:0}
+  #toast.show{transform:translateY(0);opacity:1}
+  .muted{color:var(--muted)}
+  /* scrollbar */
+  ::-webkit-scrollbar{width:8px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.2)}
+</style>
+</head>
+<body>
+
+<!-- ============ AUTH SCREEN ============ -->
+<div id="authWrap">
+  <div class="auth-card glass">
+    <h1 id="authTitle">Welcome back</h1>
+    <p id="authSub">Sign in to access your personal document memory.</p>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="showTab('login')" id="tabLogin">Login</button>
+      <button class="auth-tab" onclick="showTab('register')" id="tabRegister">Register</button>
+    </div>
+
+    <form id="authForm" onsubmit="handleAuth(event)">
+      <div id="authFields">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="authUsername" placeholder="Choose a username" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="authPassword" placeholder="Enter your password" required autocomplete="current-password">
+        </div>
+      </div>
+      <div class="error-msg" id="authError"></div>
+      <div class="auth-actions">
+        <button type="submit" class="btn btn-primary" id="authSubmitBtn">Login</button>
+      </div>
+    </form>
+    <div class="switch">
+      <span id="switchText">Don't have an account?</span> <a href="#" onclick="showTab('register')" id="switchLink">Create one</a>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP (hidden until login) ============ -->
+<div id="app">
+<header>
+  <div class="header-inner">
+    <div class="brand"><div class="dot"></div><span>OpenRouter Chat RAG</span></div>
+    <div class="user-info" id="userInfo">
+      <span class="user-badge" id="userBadge">Guest</span>
+    </div>
+    <div class="controls">
+      <button class="btn btn-ghost btn-small" onclick="loadSources()">&#8635;</button>
+      <button class="btn btn-danger btn-small" onclick="logout()">Logout</button>
+    </div>
+  </div>
+</header>
+<main>
+  <section class="panel glass">
+    <h2>Your Sources</h2>
+    <div class="upload-area" id="dropZone">
+      <label style="cursor:pointer">
+        <strong style="color:var(--accent)">&#128247;</strong><br>
+        Upload PDF, TXT, or MD<br>
+        <span class="upload-hint">Your files are private to your account (CPU embeddings + PostgreSQL)</span>
+        <input type="file" id="fileInput" accept=".pdf,.txt,.md" multiple>
+      </label>
+    </div>
+    <div class="source-list" id="sourceList">
+      <div class="empty">No sources yet. Upload a document to begin.</div>
+    </div>
+    <p class="muted" style="font-size:.78rem;margin-top:.6rem">Only you can see your uploaded documents.</p>
+  </section>
+
+  <section class="panel glass chat-wrap">
+    <div class="messages" id="messages">
+      <div class="msg bot">
+        <div class="avatar">AI</div>
+        <div class="bubble">Hi! I'm your personal RAG assistant. Upload documents and ask me anything — I only use <b>your</b> sources.</div>
+      </div>
+    </div>
+    <div class="citations" id="citations"></div>
+    <div class="input-wrap">
+      <textarea id="question" placeholder="Ask a question about your documents…" rows="1" spellcheck="false"></textarea>
+      <button id="sendBtn" title="Send">&#9654;</button>
+    </div>
+  </section>
+</main>
+</div>
+<div id="toast"></div>
+
+<script>
+const API = location.origin;
+let currentUser = null;
+
+const authWrap = document.getElementById('authWrap');
+const appEl = document.getElementById('app');
+const authForm = document.getElementById('authForm');
+const authError = document.getElementById('authError');
+const authSubmitBtn = document.getElementById('authSubmitBtn');
+const toastEl = document.getElementById('toast');
+
+const messagesEl = document.getElementById('messages');
+const citationsEl = document.getElementById('citations');
+const sourceListEl = document.getElementById('sourceList');
+const questionEl = document.getElementById('question');
+const sendBtn = document.getElementById('sendBtn');
+const fileInput = document.getElementById('fileInput');
+const userBadge = document.getElementById('userBadge');
+let isSending = false;
+
+function toast(msg, kind='info'){
+  toastEl.textContent = msg;
+  toastEl.style.borderLeft = kind==='error' ? '4px solid var(--danger)' : '4px solid var(--accent)';
+  toastEl.classList.add('show');
+  setTimeout(()=>toastEl.classList.remove('show'), 2500);
+}
+
+function escapeHtml(t){
+  return t.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function api(path, opts={}){
+  const res = await fetch(API + path, {
+    credentials: 'include',
+    headers: {'Content-Type':'application/json', ...opts.headers},
+    ...opts,
+    body: opts.body ? (typeof opts.body==='string' ? opts.body : JSON.stringify(opts.body)) : undefined
+  });
+  return res;
+}
+
+async function checkAuth(){
+  try{
+    const res = await api('/me');
+    const data = await res.json();
+    if(data.authenticated){
+      currentUser = data;
+      showApp();
+    }else{
+      showAuth();
+    }
+  }catch(e){
+    showAuth();
+  }
+}
+
+function showAuth(){
+  authWrap.style.display = 'flex';
+  appEl.style.display = 'none';
+}
+function showApp(){
+  authWrap.style.display = 'none';
+  appEl.style.display = 'block';
+  userBadge.textContent = currentUser ? currentUser.username : 'Guest';
+  loadSources();
+}
+
+function showTab(tab){
+  const isLogin = tab==='login';
+  document.getElementById('tabLogin').classList.toggle('active', isLogin);
+  document.getElementById('tabRegister').classList.toggle('active', !isLogin);
+  document.getElementById('authTitle').textContent = isLogin ? 'Welcome back' : 'Create account';
+  document.getElementById('authSub').textContent = isLogin ? 'Sign in to access your personal document memory.' : 'Create your account to get a private knowledge base.';
+  document.getElementById('authSubmitBtn').textContent = isLogin ? 'Login' : 'Register';
+  document.getElementById('switchText').textContent = isLogin ? "Don't have an account?" : "Already have an account?";
+  document.getElementById('switchLink').textContent = isLogin ? 'Create one' : 'Login';
+  document.getElementById('switchLink').onclick = () => showTab(isLogin ? 'register' : 'login');
+  authError.style.display = 'none';
+}
+
+async function handleAuth(e){
+  e.preventDefault();
+  const username = document.getElementById('authUsername').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const isRegister = !document.getElementById('tabLogin').classList.contains('active');
+  authError.style.display = 'none';
+  authSubmitBtn.disabled = true;
+  authSubmitBtn.textContent = isRegister ? 'Creating…' : 'Signing in…';
+  try{
+    const endpoint = isRegister ? '/register' : '/login';
+    const res = await api(endpoint, {method:'POST', body:{username, password}});
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.detail || (isRegister?'Registration failed':'Login failed'));
+    // Reload to fetch /me with cookie now set
+    checkAuth();
+  }catch(err){
+    authError.textContent = err.message;
+    authError.style.display = 'block';
+    authSubmitBtn.disabled = false;
+    authSubmitBtn.textContent = isRegister ? 'Register' : 'Login';
+  }
+}
+
+async function logout(){
+  await api('/logout', {method:'POST'});
+  currentUser = null;
+  showAuth();
+  toast('Logged out');
+}
+
+// ---------- Chat ----------
+function addMessage(text, who='bot', sources=[]){
+  const div = document.createElement('div');
+  div.className = 'msg ' + who;
+  const avatar = who==='user' ? 'U' : 'AI';
+  let cites = '';
+  if(sources.length){
+    cites = '<div class="citations"><strong>Sources:</strong>' +
+      sources.map(s=>`<div class="cite">&#8226; ${escapeHtml(s.source)} <span style="opacity:.7">(score ${s.score})</span></div>`).join('') +
+      '</div>';
+  }
+  div.innerHTML = `<div class="avatar">${avatar}</div><div class="bubble">${escapeHtml(text)}</div>${cites}`;
+  messagesEl.appendChild(div);
+  scrollBottom();
+}
+function scrollBottom(){ messagesEl.scrollTop = messagesEl.scrollHeight; }
+function autoResize(){
+  questionEl.style.height = 'auto';
+  questionEl.style.height = Math.min(questionEl.scrollHeight, 120) + 'px';
+}
+questionEl.addEventListener('input', autoResize);
+questionEl.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); }
+});
+sendBtn.addEventListener('click', send);
+
+async function send(){
+  const q = questionEl.value.trim();
+  if(!q || isSending) return;
+  isSending = true;
+  sendBtn.disabled = true;
+  addMessage(q, 'user');
+  questionEl.value = '';
+  autoResize();
+  const typing = document.createElement('div');
+  typing.className = 'msg bot typing';
+  typing.innerHTML = `<div class="avatar">AI</div><div class="bubble"><span class="spinner"><span></span><span></span><span></span></span> Thinking…</div>`;
+  messagesEl.appendChild(typing);
+  scrollBottom();
+  try{
+    const res = await api('/ask', {method:'POST', body:{question: q}});
+    if(!res.ok){
+      const error = await res.json().catch(()=>({}));
+      throw new Error(error.detail || error.error || `Request failed (${res.status})`);
+    }
+    const data = await res.json();
+    typing.remove();
+    addMessage(data.answer || 'No answer returned.', 'bot', data.sources || []);
+  }catch(err){
+    typing.remove();
+    addMessage('Sorry, something went wrong: ' + err.message, 'bot');
+    toast('Error: ' + err.message, 'error');
+  }finally{
+    isSending = false;
+    sendBtn.disabled = false;
+    questionEl.focus();
+  }
+}
+
+// ---------- Sources ----------
+async function loadSources(){
+  try{
+    const res = await api('/sources');
+    const data = await res.json();
+    renderSources(data.sources || []);
+  }catch(e){
+    sourceListEl.innerHTML = '<div class="empty">Could not load sources.</div>';
+  }
+}
+function renderSources(sources){
+  if(!sources.length){
+    sourceListEl.innerHTML = '<div class="empty">No sources yet. Upload a document to begin.</div>';
+    return;
+  }
+  sourceListEl.innerHTML = sources.map(s=>`
+    <div class="source-item" title="${escapeHtml(s)}">
+      <div class="source-info">
+        <div class="source-name">${escapeHtml(s)}</div>
+        <div class="source-meta">Your document</div>
+      </div>
+      <button class="remove-source" onclick="removeSource('${escapeHtml(s, true)}')" title="Remove">&#215;</button>
+    </div>
+  `).join('');
+}
+
+window.removeSource = async function(name){
+  if(!confirm('Remove source "' + name + '"?')) return;
+  try{
+    const res = await api('/sources/' + encodeURIComponent(name), {method:'DELETE'});
+    const data = await res.json();
+    toast('Removed: ' + name + ' (' + data.remaining_chunks + ' chunks left)');
+    loadSources();
+  }catch(e){ toast('Failed to remove source', 'error'); }
+};
+
+fileInput.addEventListener('change', async ()=>{
+  const files = Array.from(fileInput.files);
+  if(!files.length) return;
+  for(const f of files){
+    await uploadFile(f);
+  }
+  fileInput.value = '';
+  loadSources();
+});
+
+async function uploadFile(file){
+  const form = new FormData();
+  form.append('file', file);
+  try{
+    const res = await fetch(API + '/upload', {
+      credentials: 'include',
+      method:'POST',
+      body: form
+    });
+    if(!res.ok) throw new Error('Upload failed');
+    const data = await res.json();
+    toast(`Uploaded ${data.filename} — ${data.chunks} chunks indexed`);
+  }catch(e){
+    toast('Upload failed: ' + e.message, 'error');
+  }
+}
+
+// ---------- Boot ----------
+checkAuth();
+</script>
+</body>
+</html>
