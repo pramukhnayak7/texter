@@ -5,6 +5,7 @@ node_modules/
 .env
 .env.*
 !.env.example
+!.env.aws.example
 
 # Python runtime files
 __pycache__/
