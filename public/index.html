@@ -5,7 +5,7 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
-    <title>OpenRouter Chat</title>
+    <title>AI Teacher // Terminal</title>
 
     <link rel="stylesheet" href="styles.css">
 
@@ -22,21 +22,21 @@
     <aside class="sidebar" id="sidebar">
 
         <div class="sidebar-header-mobile">
-            <span class="sidebar-brand">OpenRouter Chat</span>
-            <fluent-button appearance="subtle" class="close-sidebar-btn" id="closeSidebarBtn" type="button" title="Close sidebar" aria-label="Close sidebar">×</fluent-button>
+            <span class="sidebar-brand">AI-TEACHER // TERMINAL</span>
+            <button class="close-sidebar-btn" id="closeSidebarBtn" title="Close sidebar" aria-label="Close sidebar">×</button>
         </div>
 
         <div class="sidebar-top">
 
-            <fluent-button appearance="outline" class="new-chat" id="newChat" title="Start a new chat" type="button">
+            <button class="new-chat" id="newChat" title="Start a new chat">
                 <span>＋</span>
                 New chat
-            </fluent-button>
+            </button>
 
-            <fluent-button appearance="subtle" class="new-chat live-chat-button" id="liveChatBtn" title="Join global live chat" type="button">
+            <button class="new-chat" id="liveChatBtn" title="Join global live chat" style="margin-top: 10px;">
                 <span>💬</span>
                 Live Global Chat
-            </fluent-button>
+            </button>
 
             <div class="history" id="history"></div>
 
@@ -44,16 +44,16 @@
 
         <div class="sidebar-bottom">
 
-            <fluent-anchor-button href="/api/download-extension" download="ai-teacher-extension.zip" appearance="subtle" class="download-ext-btn" id="downloadExtensionBtn" title="Download Chrome / Edge Extension (.zip)">
+            <a href="/api/download-extension" download="ai-teacher-extension.zip" class="download-ext-btn" id="downloadExtensionBtn" title="Download Chrome / Edge Extension (.zip)">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="7 10 12 15 17 10"></polyline>
                     <line x1="12" y1="15" x2="12" y2="3"></line>
                 </svg>
                 <span>Download Extension</span>
-            </fluent-anchor-button>
+            </a>
 
-            <div class="terminal-status"><span class="status-dot"></span> Ready</div>
+            <div class="terminal-status"><span class="status-dot"></span> SYSTEM ONLINE</div>
 
             <div class="account">
                 <div class="avatar">AI</div>
@@ -75,29 +75,29 @@
 
         <header class="topbar">
 
-            <fluent-button appearance="subtle" class="menu" id="menu" type="button" aria-label="Open navigation">
+            <button class="menu" id="menu">
                 ☰
-            </fluent-button>
+            </button>
 
             <div class="topbar-actions">
                 <div class="model-wrapper">
 
-                    <fluent-dropdown id="model" value="dots-studio/dots-3-note-preview:free" aria-label="Select a model">
-                        <fluent-dropdown-option value="dots-studio/dots-3-note-preview:free" selected>
+                    <select id="model">
+                        <option value="dots-studio/dots-3-note-preview:free" selected>
                             Dots3-Note Preview (Free - Vision/MCQ Solver)
-                        </fluent-dropdown-option>
-                        <fluent-dropdown-option value="openrouter/free">
+                        </option>
+                        <option value="openrouter/free">
                             OpenRouter Auto (Free - Text)
-                        </fluent-dropdown-option>
-                    </fluent-dropdown>
+                        </option>
+                    </select>
 
                 </div>
 
-                <fluent-button appearance="subtle" id="themeToggle" class="theme-toggle" type="button" title="Cycle color theme" aria-label="Cycle color theme">
+                <button id="themeToggle" class="theme-toggle" title="Cycle color theme" aria-label="Cycle color theme">
                     <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
                     <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                     <span class="vscode-icon" aria-hidden="true">&lt;/&gt;</span>
-                </fluent-button>
+                </button>
             </div>
 
         </header>
@@ -110,30 +110,30 @@
             <div class="global-chat-view" id="globalChatView" hidden>
                 <section class="global-chat-auth" id="globalChatAuth" aria-labelledby="globalChatTitle">
                     <div class="global-chat-auth-header">
-                        <div class="global-chat-kicker">GLOBAL CHAT</div>
+                        <div class="global-chat-kicker">GLOBAL // MEMBERS</div>
                         <h2 id="globalChatTitle">Join the conversation</h2>
                         <p>Sign in or create an account to participate in global chat.</p>
                     </div>
 
                     <div class="global-auth-tabs" role="tablist" aria-label="Global chat account">
-                        <fluent-button appearance="subtle" type="button" id="globalLoginTab" class="active" role="tab" aria-selected="true">Sign in</fluent-button>
-                        <fluent-button appearance="subtle" type="button" id="globalSignupTab" role="tab" aria-selected="false">Create account</fluent-button>
+                        <button type="button" id="globalLoginTab" class="active" role="tab" aria-selected="true">Sign in</button>
+                        <button type="button" id="globalSignupTab" role="tab" aria-selected="false">Create account</button>
                     </div>
 
                     <form id="globalAuthForm" class="global-auth-form">
                         <label class="global-auth-field" id="globalDisplayNameField" hidden>
                             Display name
-                            <fluent-text-input id="globalDisplayName" type="text" maxlength="40" autocomplete="nickname" placeholder="How others see you"></fluent-text-input>
+                            <input id="globalDisplayName" type="text" maxlength="40" autocomplete="nickname" placeholder="How others see you">
                         </label>
                         <label class="global-auth-field">
                             Email
-                            <fluent-text-input id="globalEmail" type="email" autocomplete="email" required placeholder="you@example.com"></fluent-text-input>
+                            <input id="globalEmail" type="email" autocomplete="email" required placeholder="you@example.com">
                         </label>
                         <label class="global-auth-field">
                             Password
-                            <fluent-text-input id="globalPassword" type="password" minlength="6" autocomplete="current-password" required placeholder="At least 6 characters"></fluent-text-input>
+                            <input id="globalPassword" type="password" minlength="6" autocomplete="current-password" required placeholder="At least 6 characters">
                         </label>
-                        <fluent-button appearance="primary" class="global-auth-submit" id="globalAuthSubmit" type="submit">Sign in</fluent-button>
+                        <button class="global-auth-submit" id="globalAuthSubmit" type="submit">Sign in</button>
                         <p class="global-auth-status" id="globalAuthStatus" role="status" aria-live="polite"></p>
                     </form>
                 </section>
@@ -144,7 +144,7 @@
                             <strong id="globalChatIdentity"></strong>
                             <span class="global-chat-online"><span></span> <span id="globalChatConnectionLabel">Connecting...</span></span>
                         </div>
-                        <fluent-button appearance="outline" type="button" class="global-chat-signout" id="globalSignOut">Sign out</fluent-button>
+                        <button type="button" class="global-chat-signout" id="globalSignOut">Sign out</button>
                     </header>
                     <p class="global-chat-status" id="globalChatStatus" role="status" aria-live="polite"></p>
                     <div class="global-chat-messages" id="globalChatMessages" aria-live="polite"></div>
@@ -155,7 +155,7 @@
 
                 <div class="logo">✦</div>
 
-                <div class="terminal-prompt">OPENROUTER CHAT</div>
+                <div class="terminal-prompt">$ ai-teacher --ready</div>
                 <h1>How can I help?</h1>
 
                 <p>
@@ -179,9 +179,9 @@
                     </div>
                 </div>
 
-                <fluent-button appearance="subtle" type="button" id="attachBtn" title="Attach image or paste with Ctrl+V" aria-label="Attach image">
+                <button type="button" id="attachBtn" title="Attach Image or Paste with Ctrl+V" style="background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 10px; padding-left: 5px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-                </fluent-button>
+                </button>
                 <input type="file" id="imageInput" accept="image/*" style="display: none;">
 
                 <textarea
@@ -191,13 +191,13 @@
                     autocomplete="off"
                 ></textarea>
 
-                <fluent-button appearance="primary"
+                <button
                     type="submit"
                     class="send"
                     id="send"
-                    aria-label="Send message">
+                >
                     ↑
-                </fluent-button>
+                </button>
 
             </form>
 
@@ -213,8 +213,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script defer src="/vendor/fluentui.js"></script>
-<script defer src="app.js"></script>
+<script src="app.js"></script>
 
 </body>
 </html>

@@ -4,36 +4,36 @@
 
 :root {
     color-scheme: light;
-    --bg: #f5f5f5;
-    --sidebar: #fafafa;
-    --text: #242424;
-    --muted: #616161;
-    --border: #e0e0e0;
+    --bg: #f8fafc;
+    --sidebar: #f1f5f9;
+    --text: #0f172a;
+    --muted: #64748b;
+    --border: #cbd5e1;
     --input: #ffffff;
-    --hover: #f0f0f0;
+    --hover: #e2e8f0;
     --user: #ffffff;
-    --red: #0f6cbd;
-    --red-bright: #115ea3;
-    --red-dark: #0f6cbd;
-    --red-soft: rgba(15, 108, 189, .10);
-    --accent-rgb: 15, 108, 189;
+    --red: #dc2626;
+    --red-bright: #ef4444;
+    --red-dark: #b91c1c;
+    --red-soft: rgba(220, 38, 38, .10);
+    --accent-rgb: 220, 38, 38;
 }
 
 body.light {
     color-scheme: light;
-    --bg: #f5f5f5;
-    --sidebar: #fafafa;
-    --text: #242424;
-    --muted: #616161;
-    --border: #e0e0e0;
+    --bg: #f8fafc;
+    --sidebar: #f1f5f9;
+    --text: #0f172a;
+    --muted: #64748b;
+    --border: #cbd5e1;
     --input: #ffffff;
-    --hover: #f0f0f0;
+    --hover: #e2e8f0;
     --user: #ffffff;
-    --red: #0f6cbd;
-    --red-bright: #115ea3;
-    --red-dark: #0f6cbd;
-    --red-soft: rgba(15, 108, 189, .10);
-    --accent-rgb: 15, 108, 189;
+    --red: #dc2626;
+    --red-bright: #ef4444;
+    --red-dark: #b91c1c;
+    --red-soft: rgba(220, 38, 38, .10);
+    --accent-rgb: 220, 38, 38;
 }
 
 html,
@@ -76,11 +76,11 @@ body.dark {
     --input: #111114;
     --hover: #1a1a1e;
     --user: #18181c;
-    --red: #479ef5;
-    --red-bright: #62abf5;
-    --red-dark: #479ef5;
-    --red-soft: rgba(71, 158, 245, .16);
-    --accent-rgb: 71, 158, 245;
+    --red: #ff3b30;
+    --red-bright: #ff5148;
+    --red-dark: #7f1713;
+    --red-soft: rgba(255, 59, 48, .10);
+    --accent-rgb: 255, 59, 48;
 }
 
 button,
@@ -1085,385 +1085,6 @@ textarea {
 
     .message.user .bubble {
         max-width: 88%;
-    }
-}
-
-/* Fluent UI theme tokens and component layout */
-:root,
-body.light {
-    --colorNeutralForeground1: #242424;
-    --colorNeutralForeground1Hover: #242424;
-    --colorNeutralForeground1Pressed: #242424;
-    --colorNeutralForeground2: #424242;
-    --colorNeutralForeground2Hover: #242424;
-    --colorNeutralForeground2Pressed: #242424;
-    --colorNeutralForeground2BrandHover: #0f6cbd;
-    --colorNeutralForeground2BrandPressed: #0c3b5e;
-    --colorNeutralForeground2BrandSelected: #0f6cbd;
-    --colorNeutralForeground3: #616161;
-    --colorNeutralForegroundDisabled: #bdbdbd;
-    --colorNeutralForegroundOnBrand: #ffffff;
-    --colorNeutralBackground1: #ffffff;
-    --colorNeutralBackground1Hover: #f5f5f5;
-    --colorNeutralBackground1Pressed: #e0e0e0;
-    --colorNeutralBackground2: #fafafa;
-    --colorNeutralBackground3: #f5f5f5;
-    --colorNeutralBackgroundDisabled: #f0f0f0;
-    --colorNeutralStroke1: #d1d1d1;
-    --colorNeutralStroke1Hover: #c7c7c7;
-    --colorNeutralStroke1Pressed: #b3b3b3;
-    --colorNeutralStrokeDisabled: #e0e0e0;
-    --colorSubtleBackground: transparent;
-    --colorSubtleBackgroundHover: #f5f5f5;
-    --colorSubtleBackgroundPressed: #e0e0e0;
-    --colorTransparentBackground: transparent;
-    --colorTransparentBackgroundHover: #f5f5f5;
-    --colorTransparentBackgroundPressed: #e0e0e0;
-    --colorTransparentStroke: transparent;
-    --colorBrandBackground: #0f6cbd;
-    --colorBrandBackgroundHover: #115ea3;
-    --colorBrandBackgroundPressed: #0c3b5e;
-    --colorStrokeFocus2: #242424;
-    --fontFamilyBase: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
-    --fontSizeBase200: 12px;
-    --fontSizeBase300: 14px;
-    --fontSizeBase400: 16px;
-    --fontWeightRegular: 400;
-    --fontWeightSemibold: 600;
-    --borderRadiusCircular: 9999px;
-    --borderRadiusLarge: 6px;
-    --borderRadiusMedium: 4px;
-    --borderRadiusNone: 0;
-    --borderRadiusSmall: 2px;
-    --curveEasyEase: cubic-bezier(.33, 0, .67, 1);
-    --durationFaster: 100ms;
-    --lineHeightBase200: 16px;
-    --lineHeightBase300: 20px;
-    --lineHeightBase400: 24px;
-    --shadow2: 0 1px 2px rgba(0, 0, 0, .14), 0 0 2px rgba(0, 0, 0, .12);
-    --shadow4: 0 2px 4px rgba(0, 0, 0, .14), 0 0 2px rgba(0, 0, 0, .12);
-    --spacingHorizontalL: 16px;
-    --spacingHorizontalM: 12px;
-    --spacingHorizontalS: 8px;
-    --spacingHorizontalSNudge: 6px;
-    --spacingHorizontalXS: 4px;
-    --strokeWidthThick: 2px;
-    --strokeWidthThin: 1px;
-}
-
-body.dark,
-body.vscode {
-    --colorNeutralForeground1: #f5f5f5;
-    --colorNeutralForeground1Hover: #ffffff;
-    --colorNeutralForeground1Pressed: #e0e0e0;
-    --colorNeutralForeground2: #d1d1d1;
-    --colorNeutralForeground2Hover: #ffffff;
-    --colorNeutralForeground2Pressed: #f5f5f5;
-    --colorNeutralForeground2BrandHover: #62abf5;
-    --colorNeutralForeground2BrandPressed: #2886de;
-    --colorNeutralForeground2BrandSelected: #479ef5;
-    --colorNeutralForeground3: #adadad;
-    --colorNeutralForegroundDisabled: #5c5c5c;
-    --colorNeutralForegroundOnBrand: #ffffff;
-    --colorNeutralBackground1: #292929;
-    --colorNeutralBackground1Hover: #3d3d3d;
-    --colorNeutralBackground1Pressed: #1f1f1f;
-    --colorNeutralBackground2: #1f1f1f;
-    --colorNeutralBackground3: #141414;
-    --colorNeutralBackgroundDisabled: #292929;
-    --colorNeutralStroke1: #525252;
-    --colorNeutralStroke1Hover: #707070;
-    --colorNeutralStroke1Pressed: #3d3d3d;
-    --colorNeutralStrokeDisabled: #3d3d3d;
-    --colorSubtleBackground: transparent;
-    --colorSubtleBackgroundHover: #3d3d3d;
-    --colorSubtleBackgroundPressed: #1f1f1f;
-    --colorTransparentBackground: transparent;
-    --colorTransparentBackgroundHover: #3d3d3d;
-    --colorTransparentBackgroundPressed: #1f1f1f;
-    --colorTransparentStroke: transparent;
-    --colorBrandBackground: #479ef5;
-    --colorBrandBackgroundHover: #62abf5;
-    --colorBrandBackgroundPressed: #2886de;
-    --colorStrokeFocus2: #ffffff;
-    --shadow2: 0 1px 2px rgba(0, 0, 0, .28), 0 0 2px rgba(0, 0, 0, .24);
-    --shadow4: 0 2px 4px rgba(0, 0, 0, .28), 0 0 2px rgba(0, 0, 0, .24);
-}
-
-body.vscode {
-    --colorNeutralForeground1: #cccccc;
-    --colorNeutralForeground1Hover: #ffffff;
-    --colorNeutralForeground2: #cccccc;
-    --colorNeutralForeground3: #858585;
-    --colorNeutralBackground1: #252526;
-    --colorNeutralBackground1Hover: #2a2d2e;
-    --colorNeutralBackground1Pressed: #1e1e1e;
-    --colorNeutralBackground2: #1e1e1e;
-    --colorNeutralBackground3: #181818;
-    --colorNeutralStroke1: #333333;
-    --colorBrandBackground: #007acc;
-    --colorBrandBackgroundHover: #1f8ad2;
-    --colorBrandBackgroundPressed: #005a9e;
-}
-
-html,
-body {
-    font-family: var(--fontFamilyBase);
-}
-
-body.light .main {
-    background: var(--bg);
-}
-
-body.light .topbar {
-    background: var(--input);
-}
-
-.sidebar {
-    width: 272px;
-    padding: 16px 12px;
-    background: var(--sidebar);
-}
-
-.sidebar-brand {
-    color: var(--text);
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: -.01em;
-}
-
-fluent-button.new-chat {
-    display: block;
-    width: 100%;
-    margin: 4px 0 8px;
-    text-align: left;
-}
-
-fluent-button.new-chat::part(content) {
-    justify-content: flex-start;
-}
-
-fluent-button.live-chat-button {
-    margin-top: 0;
-}
-
-.topbar {
-    height: 64px;
-    padding: 0 24px;
-    background: var(--input);
-}
-
-.topbar-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-left: auto;
-}
-
-.model-wrapper {
-    margin-left: 0;
-}
-
-fluent-dropdown#model {
-    width: min(310px, 50vw);
-    font-family: var(--fontFamilyBase);
-    font-size: 12px;
-}
-
-.chat {
-    padding: 32px 24px 150px;
-}
-
-.welcome {
-    max-width: 720px;
-    margin-top: 14vh;
-}
-
-.logo {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    background: var(--red-soft);
-    color: var(--red);
-    font-size: 25px;
-}
-
-.terminal-prompt {
-    margin-top: 24px;
-    color: var(--red);
-    font-family: var(--fontFamilyBase);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: .08em;
-}
-
-.welcome h1 {
-    margin: 10px 0 8px;
-    font-size: clamp(30px, 4vw, 40px);
-    letter-spacing: -.035em;
-}
-
-.welcome p {
-    color: var(--muted);
-    font-size: 15px;
-}
-
-.composer-area {
-    width: min(820px, calc(100vw - 312px));
-    left: calc(272px + (100vw - 272px) / 2);
-    transform: translateX(-50%);
-}
-
-.composer {
-    min-height: 64px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    background: var(--input);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
-}
-
-.composer:focus-within {
-    border-color: var(--red);
-    box-shadow: 0 0 0 1px var(--red);
-}
-
-#input {
-    padding: 10px 8px;
-    font: 14px/1.5 var(--fontFamilyBase);
-}
-
-fluent-button#attachBtn {
-    flex: 0 0 38px;
-    width: 38px;
-    height: 38px;
-}
-
-fluent-button.send {
-    flex: 0 0 38px;
-    width: 38px;
-    height: 38px;
-}
-
-.terminal-hint,
-.disclaimer {
-    font-family: var(--fontFamilyBase);
-    letter-spacing: 0;
-}
-
-.global-chat-auth {
-    width: min(100%, 440px);
-    padding: 28px;
-    border-radius: 8px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, .08);
-}
-
-.global-chat-auth-header h2 {
-    font-size: 22px;
-    letter-spacing: -.02em;
-}
-
-.global-auth-tabs {
-    border: 0;
-    border-bottom: 1px solid var(--border);
-    border-radius: 0;
-    background: transparent;
-}
-
-.global-auth-tabs fluent-button {
-    display: flex;
-    justify-content: center;
-    min-width: 0;
-    min-height: 36px;
-    color: var(--muted);
-    border-radius: 0;
-}
-
-.global-auth-tabs fluent-button.active {
-    color: var(--red);
-    box-shadow: inset 0 -2px var(--red);
-}
-
-.global-auth-field input {
-    min-height: 40px;
-    border-radius: 4px;
-    background: var(--input);
-    font-family: var(--fontFamilyBase);
-}
-
-.global-auth-field fluent-text-input {
-    display: block;
-    width: 100%;
-    font-family: var(--fontFamilyBase);
-}
-
-fluent-button.global-auth-submit {
-    width: 100%;
-    min-height: 40px;
-    font-family: var(--fontFamilyBase);
-}
-
-fluent-button.global-chat-signout {
-    min-height: 32px;
-}
-
-fluent-button.global-chat-signout:hover {
-    color: var(--text);
-}
-
-.terminal-status {
-    color: var(--muted);
-    font-family: var(--fontFamilyBase);
-    font-size: 12px;
-    letter-spacing: 0;
-}
-
-.status-dot {
-    background: #13a10e;
-    box-shadow: none;
-}
-
-fluent-anchor-button.download-ext-btn {
-    display: flex;
-    width: 100%;
-    min-height: 36px;
-    margin-bottom: 10px;
-    padding: 0 8px;
-    border: 0;
-    font-size: 13px;
-    font-weight: 400;
-    letter-spacing: 0;
-}
-
-fluent-anchor-button.download-ext-btn svg {
-    color: var(--red);
-}
-
-.history-item {
-    border-radius: 4px;
-}
-
-.history-item.active {
-    background: var(--red-soft);
-    color: var(--red);
-}
-
-@media (max-width: 700px) {
-    .topbar {
-        padding: 0 12px;
-    }
-
-    .topbar-actions {
-        gap: 4px;
-    }
-
-    fluent-dropdown#model {
-        width: min(250px, 60vw);
-    }
-
-    .composer-area {
-        width: calc(100% - 24px);
-        left: 12px;
-        transform: none;
     }
 }
 
