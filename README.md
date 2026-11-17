@@ -31,10 +31,10 @@ The EC2 Compose file runs both services and PostgreSQL. The Node chat UI is publ
 5. Start services:
 
    ```bash
-   docker compose -f docker-compose.ec2.yml up -d --build
+   docker compose --env-file .env.aws -f docker-compose.ec2.yml up -d --build
    ```
 
-6. Open `http://<EC2-public-ip>/` for chat. Check service status with `docker compose -f docker-compose.ec2.yml ps` and logs with `docker compose -f docker-compose.ec2.yml logs -f`.
+6. Open `http://<EC2-public-ip>/` for chat. Check service status with `docker compose --env-file .env.aws -f docker-compose.ec2.yml ps` and logs with `docker compose --env-file .env.aws -f docker-compose.ec2.yml logs -f`.
 
 The database and uploaded document data live in named Docker volumes. Back up those volumes or use an external database and persistent storage before relying on the instance for important data. A 2 GiB instance is suitable for light use; concurrent large PDF ingestion can exceed the RAG container's memory limit.
 
