@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OpenRouter Chat RAG — NotebookLM Style</title>
+<title>Document Q&amp;A</title>
 <style>
   :root{
     --bg:#0f172a;
@@ -147,6 +147,96 @@
   ::-webkit-scrollbar-track{background:transparent}
   ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px}
   ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.2)}
+
+  /* Fluent UI theme and RAG workspace */
+  :root{
+    --bg:#f5f5f5;--card:#fff;--card-hover:#f0f0f0;--accent:#0f6cbd;
+    --accent-soft:#ebf3fc;--text:#242424;--muted:#616161;--border:#e0e0e0;
+    --success:#13a10e;--danger:#d13438;--radius:8px;
+    --colorNeutralForeground1:#242424;--colorNeutralForeground1Hover:#242424;
+    --colorNeutralForeground1Pressed:#242424;--colorNeutralForeground2:#424242;
+    --colorNeutralForeground2Hover:#242424;--colorNeutralForeground2Pressed:#242424;
+    --colorNeutralForeground2BrandHover:#0f6cbd;--colorNeutralForeground2BrandPressed:#0c3b5e;
+    --colorNeutralForeground2BrandSelected:#0f6cbd;--colorNeutralForeground3:#616161;
+    --colorNeutralForegroundDisabled:#bdbdbd;--colorNeutralForegroundOnBrand:#fff;
+    --colorNeutralBackground1:#fff;--colorNeutralBackground1Hover:#f5f5f5;
+    --colorNeutralBackground1Pressed:#e0e0e0;--colorNeutralBackground2:#fafafa;
+    --colorNeutralBackground3:#f5f5f5;--colorNeutralBackgroundDisabled:#f0f0f0;
+    --colorNeutralStroke1:#d1d1d1;--colorNeutralStroke1Hover:#c7c7c7;
+    --colorNeutralStroke1Pressed:#b3b3b3;--colorNeutralStrokeDisabled:#e0e0e0;
+    --colorSubtleBackground:transparent;--colorSubtleBackgroundHover:#f5f5f5;
+    --colorSubtleBackgroundPressed:#e0e0e0;--colorTransparentBackground:transparent;
+    --colorTransparentBackgroundHover:#f5f5f5;--colorTransparentBackgroundPressed:#e0e0e0;
+    --colorTransparentStroke:transparent;--colorBrandBackground:#0f6cbd;
+    --colorBrandBackgroundHover:#115ea3;--colorBrandBackgroundPressed:#0c3b5e;
+    --colorStrokeFocus2:#242424;--fontFamilyBase:"Segoe UI",Arial,sans-serif;
+    --fontSizeBase200:12px;--fontSizeBase300:14px;--fontSizeBase400:16px;
+    --fontWeightRegular:400;--fontWeightSemibold:600;
+    --borderRadiusCircular:9999px;--borderRadiusLarge:6px;--borderRadiusMedium:4px;
+    --borderRadiusNone:0;--borderRadiusSmall:2px;--curveEasyEase:cubic-bezier(.33,0,.67,1);
+    --durationFaster:100ms;--lineHeightBase200:16px;--lineHeightBase300:20px;--lineHeightBase400:24px;
+    --shadow2:0 1px 2px rgba(0,0,0,.14),0 0 2px rgba(0,0,0,.12);
+    --shadow4:0 2px 4px rgba(0,0,0,.14),0 0 2px rgba(0,0,0,.12);
+    --spacingHorizontalL:16px;--spacingHorizontalM:12px;--spacingHorizontalS:8px;
+    --spacingHorizontalSNudge:6px;--spacingHorizontalXS:4px;--strokeWidthThick:2px;--strokeWidthThin:1px;
+  }
+  body{background:var(--bg);color:var(--text);font-family:var(--fontFamilyBase)}
+  .glass{background:var(--card);backdrop-filter:none;-webkit-backdrop-filter:none;border:1px solid var(--border);border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  #authWrap{padding:24px}
+  .auth-card{max-width:420px;padding:32px}
+  .auth-card h1{color:var(--text);font-size:24px;letter-spacing:-.02em}
+  .auth-card p{font-size:14px;line-height:1.5}
+  .auth-tabs{gap:8px;margin-bottom:20px;padding-bottom:0}
+  fluent-button.auth-tab{flex:1;justify-content:center;min-height:36px;color:var(--muted);border-radius:0}
+  fluent-button.auth-tab.active{color:var(--accent);box-shadow:inset 0 -2px var(--accent)}
+  .form-group label{font-size:13px;color:var(--text);margin-bottom:6px}
+  fluent-text-input{display:block;width:100%;font-family:var(--fontFamilyBase)}
+  .auth-actions{margin-top:18px}
+  fluent-button.btn-primary{width:100%;justify-content:center;min-height:40px}
+  .switch{font-size:13px}
+  .switch a,.auth-card a{color:var(--accent)}
+  header{background:#fff;backdrop-filter:none;padding:12px 24px;border-bottom-color:var(--border)}
+  .header-inner{max-width:1280px}
+  .brand{color:var(--text);letter-spacing:-.02em}
+  .brand .dot{width:8px;height:8px;box-shadow:none}
+  .brand span{font-size:17px}
+  .user-info{color:var(--text)}
+  .user-badge{background:var(--accent-soft);color:var(--accent);border-color:#c7e0f4;padding:4px 10px}
+  .controls{gap:8px}
+  fluent-button.btn-ghost,fluent-button.btn-danger{min-height:34px;font-size:13px}
+  fluent-button.btn-danger{--colorNeutralForeground1:var(--danger);--colorNeutralForeground1Hover:#a4262c}
+  main{max-width:1280px;padding:24px;grid-template-columns:minmax(280px,340px) minmax(0,1fr);gap:16px}
+  .panel{padding:20px}
+  .panel h2{color:var(--text);font-size:16px;font-weight:600;letter-spacing:0;text-transform:none;margin-bottom:16px}
+  .source-list{gap:8px;max-height:calc(82vh - 220px)}
+  .source-item{background:#fff;border-color:var(--border);border-radius:6px;padding:12px}
+  .source-item:hover{border-color:#8abde5}
+  .source-name{font-size:14px}
+  .source-meta{font-size:12px}
+  fluent-button.remove-source{min-width:32px;max-width:32px;min-height:32px;padding:0;color:var(--danger)}
+  .upload-area{border:1px dashed #8a8886;border-radius:6px;padding:20px 14px;margin-bottom:16px;background:#fafafa}
+  .upload-area:hover{border-color:var(--accent);background:var(--accent-soft)}
+  .upload-area strong{color:var(--accent)!important}
+  .upload-hint{font-size:12px}
+  .chat-wrap{height:calc(100vh - 118px);max-height:none;min-height:520px;padding:20px}
+  .messages{padding:8px 0;gap:16px}
+  .msg{max-width:88%;gap:10px}
+  .bubble{font-size:14px;padding:12px 16px;border-radius:8px;line-height:1.55}
+  .msg.user .bubble{background:#ebf3fc;color:#242424;border:1px solid #c7e0f4;border-bottom-right-radius:4px}
+  .msg.bot .bubble{background:#fff;border-color:var(--border);border-bottom-left-radius:4px}
+  .avatar{width:30px;height:30px;font-size:12px}
+  .msg.user .avatar{background:var(--accent);color:#fff}
+  .msg.bot .avatar{background:#ebf3fc;border-color:#c7e0f4;color:var(--accent)}
+  .input-wrap{background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px;align-items:flex-end}
+  .input-wrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .input-wrap textarea{min-height:44px;color:var(--text);font:14px/1.5 var(--fontFamilyBase)}
+  fluent-button#sendBtn{min-width:44px;max-width:44px;min-height:44px}
+  #toast{background:#fff;border-color:var(--border);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.14)}
+  .empty{padding:24px 12px;font-size:13px}
+  .citations{border-top-color:var(--border)}
+  .cite{border-left-color:#8abde5}
+  @media(max-width:900px){main{grid-template-columns:1fr;padding:16px}.chat-wrap{height:65vh;min-height:440px}.source-list{max-height:320px}}
+  @media(max-width:560px){header{padding:10px 12px}.header-inner{flex-wrap:wrap;gap:8px}.brand{flex:1}.user-info{order:2}.controls{order:3;margin-left:auto}main{padding:12px;gap:12px}.panel{padding:16px}.msg{max-width:100%}.auth-card{padding:24px}}
 </style>
 </head>
 <body>
@@ -158,24 +248,24 @@
     <p id="authSub">Sign in to access your personal document memory.</p>
 
     <div class="auth-tabs">
-      <button class="auth-tab active" onclick="showTab('login')" id="tabLogin">Login</button>
-      <button class="auth-tab" onclick="showTab('register')" id="tabRegister">Register</button>
+      <fluent-button appearance="subtle" class="auth-tab active" onclick="showTab('login')" id="tabLogin" type="button">Login</fluent-button>
+      <fluent-button appearance="subtle" class="auth-tab" onclick="showTab('register')" id="tabRegister" type="button">Register</fluent-button>
     </div>
 
     <form id="authForm" onsubmit="handleAuth(event)">
       <div id="authFields">
         <div class="form-group">
           <label>Username</label>
-          <input type="text" id="authUsername" placeholder="Choose a username" required autocomplete="username">
+          <fluent-text-input type="text" id="authUsername" placeholder="Choose a username" required autocomplete="username"></fluent-text-input>
         </div>
         <div class="form-group">
           <label>Password</label>
-          <input type="password" id="authPassword" placeholder="Enter your password" required autocomplete="current-password">
+          <fluent-text-input type="password" id="authPassword" placeholder="Enter your password" required autocomplete="current-password"></fluent-text-input>
         </div>
       </div>
       <div class="error-msg" id="authError"></div>
       <div class="auth-actions">
-        <button type="submit" class="btn btn-primary" id="authSubmitBtn">Login</button>
+        <fluent-button appearance="primary" type="submit" class="btn btn-primary" id="authSubmitBtn">Login</fluent-button>
       </div>
     </form>
     <div class="switch">
@@ -193,8 +283,8 @@
       <span class="user-badge" id="userBadge">Guest</span>
     </div>
     <div class="controls">
-      <button class="btn btn-ghost btn-small" onclick="loadSources()">&#8635;</button>
-      <button class="btn btn-danger btn-small" onclick="logout()">Logout</button>
+      <fluent-button appearance="outline" class="btn btn-ghost btn-small" type="button" title="Refresh sources" aria-label="Refresh sources" onclick="loadSources()">&#8635;</fluent-button>
+      <fluent-button appearance="outline" class="btn btn-danger btn-small" type="button" onclick="logout()">Logout</fluent-button>
     </div>
   </div>
 </header>
@@ -225,13 +315,14 @@
     <div class="citations" id="citations"></div>
     <div class="input-wrap">
       <textarea id="question" placeholder="Ask a question about your documents…" rows="1" spellcheck="false"></textarea>
-      <button id="sendBtn" title="Send">&#9654;</button>
+      <fluent-button appearance="primary" id="sendBtn" title="Send" aria-label="Send question" type="button">&#9654;</fluent-button>
     </div>
   </section>
 </main>
 </div>
 <div id="toast"></div>
 
+<script src="/fluentui.min.js"></script>
 <script>
 const API = location.origin;
 let currentUser = null;
@@ -422,7 +513,7 @@ function renderSources(sources){
         <div class="source-name">${escapeHtml(s)}</div>
         <div class="source-meta">Your document</div>
       </div>
-      <button class="remove-source" onclick="removeSource('${escapeHtml(s, true)}')" title="Remove">&#215;</button>
+      <fluent-button appearance="subtle" class="remove-source" icon-only size="small" type="button" onclick="removeSource('${escapeHtml(s, true)}')" title="Remove source" aria-label="Remove source">&#215;</fluent-button>
     </div>
   `).join('');
 }
