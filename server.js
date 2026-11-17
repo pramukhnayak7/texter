@@ -12,6 +12,9 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.static(path.join(__dirname, "public")));
+app.get("/vendor/fluentui.js", (_req, res) => {
+    res.sendFile(path.join(__dirname, "node_modules", "@fluentui", "web-components", "dist", "web-components.min.js"));
+});
 
 // Enable CORS for all routes (needed for Chrome extension)
 app.use((req, res, next) => {

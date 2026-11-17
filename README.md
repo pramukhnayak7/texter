@@ -2,7 +2,7 @@
 
 This repository contains two services:
 
-- **Chat UI:** Node.js/Express app served on port 3000. It streams chat completions from OpenRouter and can read optional Supabase browser configuration.
+- **Chat UI:** Node.js/Express app served on port 3000, built with Fluent UI Web Components. It streams chat completions from OpenRouter and can read optional Supabase browser configuration.
 - **Document Q&A:** FastAPI app with PostgreSQL metadata storage and CPU-only FAISS retrieval. It is a separate interface and runs on port 8000 inside Docker.
 
 ## Quick start (Docker + PostgreSQL)
