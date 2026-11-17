@@ -22,10 +22,10 @@ To run the Node chat UI locally, use `npm install` then `npm start`; it listens 
 
 ## AWS EC2: Ubuntu 22.04, 2 vCPUs, 2 GiB RAM
 
-The EC2 Compose file runs both services and PostgreSQL. The Node chat UI is public on port 80; the document Q&A API is bound to localhost on port 8001. PostgreSQL is private to the Docker network. Container limits are set to keep total service memory below the instance size and reserve CPU and memory for Ubuntu and Docker.
+The EC2 Compose file runs both services and PostgreSQL. The Node chat UI is public on port 80 and the document Q&A service is available on port 8001. PostgreSQL is private to the Docker network. Container limits are set to keep total service memory below the instance size and reserve CPU and memory for Ubuntu and Docker.
 
 1. Launch an x86_64 Ubuntu Server 22.04 LTS EC2 instance with 2 vCPUs and 2 GiB RAM. Attach persistent EBS storage for the Docker volumes.
-2. In the EC2 security group, allow inbound TCP 22 only from your IP and TCP 80 from the clients that need the chat UI. Do not open ports 5432 or 8001 publicly.
+2. In the EC2 security group, allow inbound TCP 22 only from your IP and TCP 80 and 8001 from the clients that need the apps. Do not open port 5432 publicly.
 3. Install Docker Engine and the Docker Compose plugin using Docker's Ubuntu instructions.
 4. In this directory, copy `.env.aws.example` to `.env.aws` and set unique long random values for `POSTGRES_PASSWORD` and `SESSION_SECRET_KEY`. Set `OPENROUTER_API_KEY` if you want generated answers.
 5. Start services:
@@ -34,7 +34,7 @@ The EC2 Compose file runs both services and PostgreSQL. The Node chat UI is publ
    docker compose --env-file .env.aws -f docker-compose.ec2.yml up -d --build
    ```
 
-6. Open `http://<EC2-public-ip>/` for chat. Check service status with `docker compose --env-file .env.aws -f docker-compose.ec2.yml ps` and logs with `docker compose --env-file .env.aws -f docker-compose.ec2.yml logs -f`.
+6. Open `http://<EC2-public-ip>/` for chat and `http://<EC2-public-ip>:8001/` for document Q&A. Check service status with `docker compose --env-file .env.aws -f docker-compose.ec2.yml ps` and logs with `docker compose --env-file .env.aws -f docker-compose.ec2.yml logs -f`.
 
 The database and uploaded document data live in named Docker volumes. Back up those volumes or use an external database and persistent storage before relying on the instance for important data. A 2 GiB instance is suitable for light use; concurrent large PDF ingestion can exceed the RAG container's memory limit.
 
