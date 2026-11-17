@@ -1,13 +1,9 @@
-# OpenRouter Chat RAG — NotebookLM-style (CPU-only)
+# OpenRouter Chat
 
-A responsive, deployable-anywhere RAG (Retrieval-Augmented Generation) chat app.
-- **Backend:** FastAPI + Python
-- **Retrieval:** lightweight word and phrase hashing with FAISS (CPU only; no model download)
-- **Vector search:** FAISS CPU index (`IndexFlatIP` = cosine similarity)
-- **Metadata DB:** PostgreSQL (stores documents, chunks, sources)
-- **Generation:** OpenRouter API, with an extractive answer when no API key is set
-- **Frontend:** Single-file HTML/JS/CSS, mobile-responsive, NotebookLM-inspired UI
-- **Deploy:** Docker / Docker Compose on any cloud (AWS, GCP, Azure, Fly, Railway, etc.)
+This repository contains two services:
+
+- **Chat UI:** Node.js/Express app served on port 3000. It streams chat completions from OpenRouter and can read optional Supabase browser configuration.
+- **Document Q&A:** FastAPI app with PostgreSQL metadata storage and CPU-only FAISS retrieval. It is a separate interface and runs on port 8000 inside Docker.
 
 ## Quick start (Docker + PostgreSQL)
 
@@ -16,49 +12,34 @@ A responsive, deployable-anywhere RAG (Retrieval-Augmented Generation) chat app.
 cp .env.example .env
 # edit .env and add your OPENROUTER_API_KEY (optional; without it answers use retrieved passages)
 
-# 2. Start Postgres + RAG app
+# 2. Start the document Q&A API and PostgreSQL
 docker compose up --build
 
-# 3. Open http://localhost:8001
+# 3. Open the document Q&A API at http://localhost:8001
 ```
 
-## Without Docker (local dev)
+To run the Node chat UI locally, use `npm install` then `npm start`; it listens on port 3000.
 
-```bash
-cd openrouter-chat
+## AWS EC2: Ubuntu 22.04, 2 vCPUs, 2 GiB RAM
 
-# Start PostgreSQL (make sure it's running on localhost:5432)
-# Create database: createdb -U postgres ragdb
+The EC2 Compose file runs both services and PostgreSQL. The Node chat UI is public on port 80; the document Q&A API is bound to localhost on port 8001. PostgreSQL is private to the Docker network. Container limits are set to keep total service memory below the instance size and reserve CPU and memory for Ubuntu and Docker.
 
-cp .env.example .env
-# edit .env with your DATABASE_URL and OPENROUTER_API_KEY
+1. Launch an x86_64 Ubuntu Server 22.04 LTS EC2 instance with 2 vCPUs and 2 GiB RAM. Attach persistent EBS storage for the Docker volumes.
+2. In the EC2 security group, allow inbound TCP 22 only from your IP and TCP 80 from the clients that need the chat UI. Do not open ports 5432 or 8001 publicly.
+3. Install Docker Engine and the Docker Compose plugin using Docker's Ubuntu instructions.
+4. In this directory, copy `.env.aws.example` to `.env.aws` and set unique long random values for `POSTGRES_PASSWORD` and `SESSION_SECRET_KEY`. Set `OPENROUTER_API_KEY` if you want generated answers.
+5. Start services:
 
-cd backend
-pip install -r requirements.txt
-uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
+   ```bash
+   docker compose -f docker-compose.ec2.yml up -d --build
+   ```
 
-Then open `http://localhost:8000` (or 8001 if port 8000 is taken).
+6. Open `http://<EC2-public-ip>/` for chat. Check service status with `docker compose -f docker-compose.ec2.yml ps` and logs with `docker compose -f docker-compose.ec2.yml logs -f`.
 
-## Usage
-
-1. Upload PDF/TXT/MD files from the left panel.
-2. Ask questions in the chat — answers are grounded in your uploaded sources with citations.
-3. Remove sources anytime from the left panel.
-
-## Cloud deployment
-
-The document metadata is stored in PostgreSQL. FAISS vectors are rebuilt from that data when the app starts.
-For an AWS EC2 demo, run the provided Docker Compose setup on a small x86_64 instance and keep its data volume attached. A managed PostgreSQL database can replace the bundled database for longer-lived deployments.
-
-- **Railway / Fly / Render:** connect this repo, set env vars, deploy.
-- **AWS ECS / GCP Cloud Run / Azure Container Apps:** build the Dockerfile and run on port `8000`, with a reachable PostgreSQL database.
-- **Any VPS:** `docker compose up -d` and point a domain/reverse proxy at port `8000`.
-
-You need a running PostgreSQL instance (the `db` service in docker-compose, or managed Postgres like RDS/Cloud SQL).
+The database and uploaded document data live in named Docker volumes. Back up those volumes or use an external database and persistent storage before relying on the instance for important data. A 2 GiB instance is suitable for light use; concurrent large PDF ingestion can exceed the RAG container's memory limit.
 
 ## Notes
 
-- Retrieval runs on CPU and does not load a neural model, keeping the container small enough for a low-cost demo instance.
+- Document retrieval runs on CPU without downloading a neural model.
 - Retrieval matches shared words and phrases; it may miss paraphrased questions that a semantic embedding model could find.
-- Set `OPENROUTER_API_KEY` for generated answers. Without it, the app returns the best matching passage.
+- Set `OPENROUTER_API_KEY` for generated answers in either service.
